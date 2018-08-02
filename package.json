@@ -1,0 +1,23 @@
+{
+  "name": "tslint-import-group-ordering-rule",
+  "version": "1.0.0",
+  "description": "TSLint rule for ordering import groups",
+  "main": "tslint-import-group-ordering.json",
+  "scripts": {
+    "build": "tsc"
+  },
+  "author": "Grzegorz Rozdzialik <voreny.gelio@gmail.com>",
+  "license": "ISC",
+  "dependencies": {
+    "tsutils": "^2.13.1"
+  },
+  "peerDependencies": {
+    "tslint": "^5.1.0",
+    "typescript": ">=2.1.0 || >=2.7.0-dev || >=2.8.0-dev || >=2.9.0-dev"
+  },
+  "devDependencies": {
+    "@types/node": "^7.0.13",
+    "tslint": "^5.5.0",
+    "typescript": "~2.6.2"
+  }
+}
