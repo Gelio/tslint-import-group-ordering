@@ -1,7 +1,3 @@
-/**
- * Copyright (c) 2018 Juniper Networks, Inc. All rights reserved.
- */
-
 import * as ts from 'typescript';
 import * as Lint from 'tslint';
 import * as fs from 'fs';
