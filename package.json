@@ -4,7 +4,8 @@
   "description": "TSLint rule for ordering import groups",
   "main": "tslint-import-group-ordering.json",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "prepublish": "npm run build"
   },
   "author": "Grzegorz Rozdzialik <voreny.gelio@gmail.com>",
   "license": "ISC",
