@@ -12,8 +12,45 @@ import * as fs from 'fs';
  * https://github.com/palantir/tslint/blob/master/src/rules/orderedImportsRule.ts
  */
 
-// TODO: fill all NodeJS modules
-const nodejsModules = ['fs'];
+// NOTE: NodeJS module names taken from @types/node
+const nodejsModules = [
+  '_debugger',
+  'assert',
+  'async_hooks',
+  'buffer',
+  'child_process',
+  'cluster',
+  'console',
+  'constants',
+  'crypto',
+  'dgram',
+  'dns',
+  'domain',
+  'events',
+  'fs',
+  'http',
+  'http2',
+  'https',
+  'module',
+  'net',
+  'os',
+  'path',
+  'process',
+  'punycode',
+  'querystring',
+  'readline',
+  'repl',
+  'stream',
+  'string_decoder',
+  'timers',
+  'tls',
+  'tty',
+  'url',
+  'util',
+  'v8',
+  'vm',
+  'zlib'
+];
 // NOTE: libraries are computed once
 const libraries = getLibraries();
 
