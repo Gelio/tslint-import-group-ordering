@@ -5,7 +5,7 @@
   "main": "tslint-import-group-ordering.json",
   "scripts": {
     "build": "tsc",
-    "prepublish": "npm run build"
+    "prepublishOnly": "npm run build"
   },
   "author": "Grzegorz Rozdzialik <voreny.gelio@gmail.com>",
   "license": "ISC",
