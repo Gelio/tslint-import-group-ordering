@@ -14,6 +14,8 @@ import * as fs from 'fs';
 
 // TODO: fill all NodeJS modules
 const nodejsModules = ['fs'];
+// NOTE: libraries are computed once
+const libraries = getLibraries();
 
 export class Rule extends Lint.Rules.AbstractRule {
   public static metadata: Lint.IRuleMetadata = {
@@ -80,7 +82,7 @@ function parseOptions(ruleArguments: any[]): IOptions {
 }
 
 class Walker extends Lint.AbstractWalker<IOptions> {
-  private readonly libraries = getLibraries();
+  private readonly libraries = libraries;
   private projectModuleImported = false;
   private currentImportOrderGroupIndex = 0;
   private allowNextImportsGroup = true;
@@ -145,8 +147,6 @@ class Walker extends Lint.AbstractWalker<IOptions> {
     );
     const matchingRegExp = groupsOrder[importOrderGroupIndex];
 
-    console.log(moduleSpecifier, matchingRegExp, this.allowNextImportsGroup);
-
     if (importOrderGroupIndex < this.currentImportOrderGroupIndex) {
       return this.addFailureAtNode(
         node,
@@ -173,7 +173,6 @@ class Walker extends Lint.AbstractWalker<IOptions> {
   }
 
   private endBlock(): void {
-    console.log('ending block');
     this.allowNextImportsGroup = true;
   }
 }
