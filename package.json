@@ -8,7 +8,7 @@
     "prepublishOnly": "npm run build"
   },
   "author": "Grzegorz Rozdzialik <voreny.gelio@gmail.com>",
-  "license": "ISC",
+  "license": "MIT",
   "dependencies": {},
   "peerDependencies": {
     "tslint": "^5.1.0",
@@ -18,5 +18,10 @@
     "@types/node": "^7.0.13",
     "tslint": "^5.5.0",
     "typescript": "~2.6.2"
+  },
+  "homepage": "https://github.com/Gelio/tslint-import-group-ordering",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Gelio/tslint-import-group-ordering"
   }
 }
