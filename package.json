@@ -9,9 +9,7 @@
   },
   "author": "Grzegorz Rozdzialik <voreny.gelio@gmail.com>",
   "license": "ISC",
-  "dependencies": {
-    "tsutils": "^2.13.1"
-  },
+  "dependencies": {},
   "peerDependencies": {
     "tslint": "^5.1.0",
     "typescript": ">=2.1.0 || >=2.7.0-dev || >=2.8.0-dev || >=2.9.0-dev"
