@@ -1,6 +1,7 @@
 import * as ts from 'typescript';
 import * as Lint from 'tslint';
 import * as fs from 'fs';
+import { Replacement } from 'tslint';
 
 /**
  * Inspired by
@@ -114,15 +115,114 @@ function parseOptions(ruleArguments: any[]): IOptions {
   };
 }
 
+class ImportGroups {
+  private readonly libraryImports: ts.ImportDeclaration[] = [];
+  private readonly projectImportGroups: ts.ImportDeclaration[][] = [];
+  private readonly sourceFile: ts.SourceFile;
+
+  private importsStart?: number;
+  private importsEnd?: number;
+
+  constructor(sourceFile: ts.SourceFile) {
+    this.sourceFile = sourceFile;
+  }
+
+  public addLibraryImport(node: ts.ImportDeclaration) {
+    this.libraryImports.push(node);
+    this.updateImportsPlacement(node);
+  }
+
+  public addProjectImport(node: ts.ImportDeclaration, groupIndex: number) {
+    while (this.projectImportGroups.length <= groupIndex) {
+      this.projectImportGroups.push([]);
+    }
+
+    this.projectImportGroups[groupIndex].push(node);
+    this.updateImportsPlacement(node);
+  }
+
+  public getFix() {
+    if (this.importsStart === undefined || this.importsEnd === undefined) {
+      throw new Error('No imports have been added');
+    }
+
+    const stringifiedLibraryImportsGroup = stringifyNodesGroup(
+      this.libraryImports,
+      this.sourceFile
+    );
+    const stringifiedProjectImportGroups = this.projectImportGroups.map(
+      importsGroup => stringifyNodesGroup(importsGroup, this.sourceFile)
+    );
+
+    const stringifiedImportGroups = [
+      stringifiedLibraryImportsGroup,
+      ...stringifiedProjectImportGroups
+    ]
+      .filter(importGroup => importGroup.length > 0)
+      .join('\n\n');
+
+    return new Replacement(
+      this.importsStart,
+      this.importsEnd - this.importsStart,
+      stringifiedImportGroups
+    );
+  }
+
+  public getImportsStart() {
+    if (this.importsStart === undefined) {
+      throw new Error('No imports have been added');
+    }
+
+    return this.importsStart;
+  }
+
+  public getImportsEnd() {
+    if (this.importsEnd === undefined) {
+      throw new Error('No imports have been added');
+    }
+
+    return this.importsEnd;
+  }
+
+  private updateImportsPlacement(node: ts.Node) {
+    this.updateImportsStart(node);
+    this.updateImportsEnd(node);
+  }
+
+  private updateImportsStart(node: ts.Node) {
+    if (!this.importsStart) {
+      this.importsStart = node.getStart(this.sourceFile);
+    }
+  }
+
+  private updateImportsEnd(node: ts.Node) {
+    this.importsEnd = node.getEnd();
+  }
+}
+
 class Walker extends Lint.AbstractWalker<IOptions> {
   private readonly libraries = libraries;
   private projectModuleImported = false;
   private currentImportOrderGroupIndex = 0;
   private allowNextImportsGroup = true;
 
+  private readonly importGroups = new ImportGroups(this.sourceFile);
+
   public walk(sourceFile: ts.SourceFile): void {
     for (const statement of sourceFile.statements) {
       this.checkStatement(statement);
+    }
+
+    if (this.failures.length > 0) {
+      const importsStart = this.importGroups.getImportsStart();
+      const importsEnd = this.importGroups.getImportsEnd();
+
+      this.addFailure(
+        importsStart,
+        importsEnd,
+        'Invalid import groups order',
+        this.importGroups.getFix()
+      );
     }
   }
 
@@ -159,6 +259,7 @@ class Walker extends Lint.AbstractWalker<IOptions> {
           'Library imports should appear in the first imports group'
         );
       }
+      this.importGroups.addLibraryImport(node);
     } else {
       this.checkProjectImportDeclaration(node, strippedModuleSpecifier);
     }
@@ -178,6 +279,7 @@ class Walker extends Lint.AbstractWalker<IOptions> {
     const importOrderGroupIndex = groupsOrder.findIndex(regex =>
       regex.test(moduleSpecifier)
     );
+    this.importGroups.addProjectImport(node, importOrderGroupIndex);
     const matchingRegExp = groupsOrder[importOrderGroupIndex];
 
     if (importOrderGroupIndex < this.currentImportOrderGroupIndex) {
@@ -230,4 +332,8 @@ function getLibraries() {
   return [...fs.readdirSync('node_modules'), ...nodejsModules].map(
     name => new RegExp(`^${name}`)
   );
+}
+
+function stringifyNodesGroup(nodes: ts.Node[], sourceFile?: ts.SourceFile) {
+  return nodes.map(node => node.getText(sourceFile)).join('\n');
 }
