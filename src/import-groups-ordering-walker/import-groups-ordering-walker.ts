@@ -1,18 +1,23 @@
 import * as Lint from 'tslint';
 import * as ts from 'typescript';
 
-import { ImportGroups } from '../import-groups';
 import { removeQuotes } from '../utils/remove-quotes';
-import { IOptions } from '../options/interfaces';
+import { IOptions, IOptionsWithNodesContainers } from '../options/types';
 import { getLibraries } from '../utils/get-libraries';
 
-export class ImportGroupsOrderingWalker extends Lint.AbstractWalker<IOptions> {
+/**
+ * TODO:
+ * 1. Construct GuardedNodesContainers from options
+ * 2. Use it (this should simplify the checking logic)
+ */
+
+export class ImportGroupsOrderingWalker extends Lint.AbstractWalker<
+  IOptionsWithNodesContainers
+> {
   private readonly libraries = getLibraries();
   private projectModuleImported = false;
   private currentImportOrderGroupIndex = 0;
   private allowNextImportsGroup = true;
-
-  private readonly importGroups = new ImportGroups(this.sourceFile);
 
   public walk(sourceFile: ts.SourceFile): void {
     for (const statement of sourceFile.statements) {
