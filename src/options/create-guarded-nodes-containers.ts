@@ -7,20 +7,23 @@ import {
   Predicate
 } from '../nodes-containers';
 import { getLibraries } from '../utils/get-libraries';
+import { removeQuotes } from '../utils/remove-quotes';
 
 export function createGuardedNodesContainers(
   options: IOptions,
   sourceFile: SourceFile
 ): GuardedNodesContainer<ImportDeclaration>[] {
-  return options.importsGroups.map(importsGroup => {
-    const nodesContainer = new NodesContainer<ImportDeclaration>(sourceFile);
-    const predicate = getImportsGroupPredicate(importsGroup, sourceFile);
+  return options.importsGroups
+    .concat([{ type: ImportsGroupType.Project, regExp: /.*/ }])
+    .map(importsGroup => {
+      const nodesContainer = new NodesContainer<ImportDeclaration>(sourceFile);
+      const predicate = getImportsGroupPredicate(importsGroup, sourceFile);
 
-    return new GuardedNodesContainer<ImportDeclaration>(
-      nodesContainer,
-      predicate
-    );
-  });
+      return new GuardedNodesContainer<ImportDeclaration>(
+        nodesContainer,
+        predicate
+      );
+    });
 }
 
 function getImportsGroupPredicate(
@@ -38,7 +41,7 @@ const isThirdPartyImportDeclarationFactory = (thirdPartyRegExps: RegExp[]) => (
   sourceFile: SourceFile
 ): Predicate<ImportDeclaration> => node =>
   thirdPartyRegExps.some(regExp =>
-    regExp.test(node.moduleSpecifier.getText(sourceFile))
+    regExp.test(getModuleSpecifier(sourceFile, node))
   );
 
 const isThirdPartyImportDeclaration = isThirdPartyImportDeclarationFactory(
@@ -49,4 +52,8 @@ const importDeclarationMatchesRegExpFactory = (
   sourceFile: SourceFile,
   regExp: RegExp
 ): Predicate<ImportDeclaration> => node =>
-  regExp.test(node.getText(sourceFile));
+  regExp.test(getModuleSpecifier(sourceFile, node));
+
+function getModuleSpecifier(sourceFile: SourceFile, node: ImportDeclaration) {
+  return removeQuotes(node.moduleSpecifier.getText(sourceFile));
+}
