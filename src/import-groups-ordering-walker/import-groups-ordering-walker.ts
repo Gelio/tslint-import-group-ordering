@@ -1,22 +1,16 @@
 import * as Lint from 'tslint';
 import * as ts from 'typescript';
 
-import { removeQuotes } from '../utils/remove-quotes';
-import { IOptions, IOptionsWithNodesContainers } from '../options/types';
-import { getLibraries } from '../utils/get-libraries';
-
-/**
- * TODO:
- * 1. Construct GuardedNodesContainers from options
- * 2. Use it (this should simplify the checking logic)
- */
+import { IOptionsWithNodesContainers } from '../options/types';
+import {
+  getTextRange,
+  stringifyNodesContainers
+} from '../nodes-containers/nodes-containers-utils';
 
 export class ImportGroupsOrderingWalker extends Lint.AbstractWalker<
   IOptionsWithNodesContainers
 > {
-  private readonly libraries = getLibraries();
-  private projectModuleImported = false;
-  private currentImportOrderGroupIndex = 0;
+  private currentImportGroupIndex = 0;
   private allowNextImportsGroup = true;
 
   public walk(sourceFile: ts.SourceFile): void {
@@ -25,27 +19,23 @@ export class ImportGroupsOrderingWalker extends Lint.AbstractWalker<
     }
 
     if (this.failures.length > 0) {
-      const importsStart = this.importGroups.getImportsStart();
-      const importsEnd = this.importGroups.getImportsEnd();
+      const { guardedNodesContainers } = this.options;
+      const { pos, end } = getTextRange(guardedNodesContainers);
+      const orderedImportGroups = stringifyNodesContainers(
+        guardedNodesContainers
+      );
 
       this.addFailure(
-        importsStart,
-        importsEnd,
-        'Invalid import groups order',
-        this.importGroups.getFix()
+        pos,
+        end,
+        'I1nvalid import groups order',
+        new Lint.Replacement(pos, end - pos, orderedImportGroups)
       );
     }
   }
 
   private checkStatement(statement: ts.Statement): void {
-    if (
-      /\r?\n\r?\n/.test(
-        this.sourceFile.text.slice(
-          statement.getFullStart(),
-          statement.getStart(this.sourceFile)
-        )
-      )
-    ) {
+    if (this.isStatementAfterEmptyLine(statement)) {
       this.endBlock();
     }
 
@@ -55,66 +45,59 @@ export class ImportGroupsOrderingWalker extends Lint.AbstractWalker<
     }
   }
 
+  private isStatementAfterEmptyLine(statement: ts.Statement) {
+    const { sourceFile } = this;
+
+    return /\r?\n\r?\n/.test(
+      sourceFile.text.slice(
+        statement.getFullStart(),
+        statement.getStart(sourceFile)
+      )
+    );
+  }
+
   private checkImportDeclaration(node: ts.ImportDeclaration) {
     if (!ts.isStringLiteral(node.moduleSpecifier)) {
       // Ignore grammar error
       return;
     }
 
-    const strippedModuleSpecifier = removeQuotes(node.moduleSpecifier.text);
-
-    if (this.isLibrary(strippedModuleSpecifier)) {
-      if (this.projectModuleImported) {
-        this.addFailureAtNode(
-          node,
-          'Library imports should appear in the first imports group'
-        );
-      }
-      this.importGroups.addLibraryImport(node);
-    } else {
-      this.checkProjectImportDeclaration(node, strippedModuleSpecifier);
-    }
-  }
-
-  private isLibrary(moduleSpecifier: string) {
-    return this.libraries.some(regex => regex.test(moduleSpecifier));
-  }
-
-  private checkProjectImportDeclaration(
-    node: ts.ImportDeclaration,
-    moduleSpecifier: string
-  ) {
-    this.projectModuleImported = true;
-    const { groupsOrder } = this.options;
-
-    const importOrderGroupIndex = groupsOrder.findIndex(regex =>
-      regex.test(moduleSpecifier)
+    const { guardedNodesContainers } = this.options;
+    const matchingContainerIndex = guardedNodesContainers.findIndex(
+      nodesContainer => nodesContainer.matches(node)
     );
-    this.importGroups.addProjectImport(node, importOrderGroupIndex);
-    const matchingRegExp = groupsOrder[importOrderGroupIndex];
 
-    if (importOrderGroupIndex < this.currentImportOrderGroupIndex) {
-      return this.addFailureAtNode(
-        node,
-        `This import statement should appear in an earlier group. It belongs to the group matching ${matchingRegExp}`
-      );
-    }
-
-    if (importOrderGroupIndex === this.currentImportOrderGroupIndex) {
+    if (matchingContainerIndex === -1) {
+      // NOTE: this should never happen as the last group should accept every import statement
       return;
     }
 
-    if (importOrderGroupIndex > this.currentImportOrderGroupIndex) {
-      this.currentImportOrderGroupIndex = importOrderGroupIndex;
+    const matchingContainer = guardedNodesContainers[matchingContainerIndex];
+    matchingContainer.addNode(node);
 
-      if (this.allowNextImportsGroup) {
-        return;
-      }
+    this.verifyImportGroupIndex(matchingContainerIndex, node);
+  }
 
+  private verifyImportGroupIndex(
+    importGroupIndex: number,
+    node: ts.ImportDeclaration
+  ) {
+    // TODO: show the RegExp (and/or the index) of the matching import group
+    const importGroupNumber = importGroupIndex + 1;
+
+    if (importGroupIndex < this.currentImportGroupIndex) {
       this.addFailureAtNode(
         node,
-        `This import statement should appear in a later group. It belongs to the group matching ${matchingRegExp}`
+        `This import declaration should appear in an earlier group (number ${importGroupNumber})`
       );
+    } else if (importGroupIndex > this.currentImportGroupIndex) {
+      if (!this.allowNextImportsGroup) {
+        this.addFailureAtNode(
+          node,
+          `This import declaration should appear in a later group (number ${importGroupNumber})`
+        );
+      }
+      this.currentImportGroupIndex = importGroupIndex;
     }
   }
 
