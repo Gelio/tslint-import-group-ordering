@@ -1,13 +1,13 @@
 import {
-  IOptions,
-  IJsonOptions,
+  Options,
+  JsonOptions,
   ImportsGroupConfig,
   ImportsGroup,
   ImportsGroupType
 } from './types';
 
-export function parseOptions(ruleArguments: any[]): IOptions {
-  const optionSet = (ruleArguments as IJsonOptions[])[0];
+export function parseOptions(ruleArguments: JsonOptions[]): Options {
+  const optionSet = ruleArguments[0];
 
   return {
     importsGroups: parseImportsGroups(optionSet['imports-groups'])

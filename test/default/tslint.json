@@ -1,0 +1,23 @@
+{
+  "rulesDirectory": "../../dist",
+  "rules": {
+    "import-group-ordering": {
+      "severity": "warning",
+      "options": {
+        "imports-groups": [
+          {
+            "type": "third-party"
+          },
+          {
+            "type": "project",
+            "regExp": "/^(fabric|common)/"
+          },
+          {
+            "type": "project",
+            "regExp": "/^(products)/"
+          }
+        ]
+      }
+    }
+  }
+}

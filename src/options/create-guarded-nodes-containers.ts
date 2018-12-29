@@ -1,6 +1,6 @@
 import { ImportDeclaration, SourceFile } from 'typescript';
 
-import { IOptions, ImportsGroupType, ImportsGroup } from './types';
+import { Options, ImportsGroupType, ImportsGroup } from './types';
 import {
   GuardedNodesContainer,
   NodesContainer,
@@ -9,21 +9,24 @@ import {
 import { getLibraries } from '../utils/get-libraries';
 import { removeQuotes } from '../utils/remove-quotes';
 
+const catchAllImportGroup: ImportsGroup = {
+  type: ImportsGroupType.Project,
+  regExp: /.*/
+};
+
 export function createGuardedNodesContainers(
-  options: IOptions,
+  options: Options,
   sourceFile: SourceFile
 ): GuardedNodesContainer<ImportDeclaration>[] {
-  return options.importsGroups
-    .concat([{ type: ImportsGroupType.Project, regExp: /.*/ }])
-    .map(importsGroup => {
-      const nodesContainer = new NodesContainer<ImportDeclaration>(sourceFile);
-      const predicate = getImportsGroupPredicate(importsGroup, sourceFile);
+  return options.importsGroups.concat(catchAllImportGroup).map(importsGroup => {
+    const nodesContainer = new NodesContainer<ImportDeclaration>(sourceFile);
+    const predicate = getImportsGroupPredicate(importsGroup, sourceFile);
 
-      return new GuardedNodesContainer<ImportDeclaration>(
-        nodesContainer,
-        predicate
-      );
-    });
+    return new GuardedNodesContainer<ImportDeclaration>(
+      nodesContainer,
+      predicate
+    );
+  });
 }
 
 function getImportsGroupPredicate(

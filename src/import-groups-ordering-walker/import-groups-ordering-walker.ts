@@ -1,17 +1,23 @@
 import * as Lint from 'tslint';
 import * as ts from 'typescript';
 
-import { IOptionsWithNodesContainers } from '../options/types';
+import { WalkerOptions } from '../options/types';
 import {
-  getTextRange,
+  getBoundingTextRange,
   stringifyNodesContainers
 } from '../nodes-containers/nodes-containers-utils';
+import { NodesContainer } from '../nodes-containers';
 
 export class ImportGroupsOrderingWalker extends Lint.AbstractWalker<
-  IOptionsWithNodesContainers
+  WalkerOptions
 > {
   private currentImportGroupIndex = 0;
   private allowNextImportsGroup = true;
+  private hasEncounteredImportStatement = false;
+
+  private possiblyMisplacedNonImportStatements = new NodesContainer<
+    ts.Statement
+  >(this.getSourceFile());
 
   public walk(sourceFile: ts.SourceFile): void {
     for (const statement of sourceFile.statements) {
@@ -19,16 +25,22 @@ export class ImportGroupsOrderingWalker extends Lint.AbstractWalker<
     }
 
     if (this.failures.length > 0) {
-      const { guardedNodesContainers } = this.options;
-      const { pos, end } = getTextRange(guardedNodesContainers);
-      const orderedImportGroups = stringifyNodesContainers(
-        guardedNodesContainers
-      );
+      const {
+        guardedNodesContainers,
+        misplacedNonImportStatementsContainer
+      } = this.options;
+      const allNodesContainers = [
+        ...guardedNodesContainers,
+        misplacedNonImportStatementsContainer
+      ];
+
+      const { pos, end } = getBoundingTextRange(allNodesContainers);
+      const orderedImportGroups = stringifyNodesContainers(allNodesContainers);
 
       this.addFailure(
         pos,
         end,
-        'I1nvalid import groups order',
+        'Invalid import groups order',
         new Lint.Replacement(pos, end - pos, orderedImportGroups)
       );
     }
@@ -40,8 +52,15 @@ export class ImportGroupsOrderingWalker extends Lint.AbstractWalker<
     }
 
     if (ts.isImportDeclaration(statement)) {
+      if (!this.possiblyMisplacedNonImportStatements.isEmpty()) {
+        this.handleMisplacedNonImportStatements();
+      }
       this.checkImportDeclaration(statement);
       this.allowNextImportsGroup = false;
+      this.hasEncounteredImportStatement = true;
+    } else {
+      // console.log(statement);
+      // this.possiblyMisplacedNonImportStatements.addNode(statement);
     }
   }
 
@@ -82,7 +101,7 @@ export class ImportGroupsOrderingWalker extends Lint.AbstractWalker<
     importGroupIndex: number,
     node: ts.ImportDeclaration
   ) {
-    // TODO: show the RegExp (and/or the index) of the matching import group
+    // TODO: display names of import groups in the error messages
     const importGroupNumber = importGroupIndex + 1;
 
     if (importGroupIndex < this.currentImportGroupIndex) {
@@ -101,7 +120,29 @@ export class ImportGroupsOrderingWalker extends Lint.AbstractWalker<
     }
   }
 
-  private endBlock(): void {
+  private endBlock() {
     this.allowNextImportsGroup = true;
+  }
+
+  private handleMisplacedNonImportStatements() {
+    if (this.hasEncounteredImportStatement) {
+      const {
+        pos,
+        end
+      } = this.possiblyMisplacedNonImportStatements.getTextRange();
+      this.addFailureAt(
+        pos,
+        end - pos,
+        'Non-import statements should not appear between import groups'
+      );
+
+      this.options.misplacedNonImportStatementsContainer.copyNodesFrom(
+        this.possiblyMisplacedNonImportStatements
+      );
+    }
+
+    this.possiblyMisplacedNonImportStatements = new NodesContainer(
+      this.getSourceFile()
+    );
   }
 }

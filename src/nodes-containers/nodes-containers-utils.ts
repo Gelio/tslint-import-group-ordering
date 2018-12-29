@@ -3,12 +3,12 @@ import { Node, TextRange } from 'typescript';
 import { NodesContainer } from './nodes-container';
 import { Predicate } from './types';
 
-export function getTextRange<TNode extends Node>(
+export function getBoundingTextRange<TNode extends Node>(
   nodesContainers: NodesContainer<TNode>[]
 ): TextRange {
-  const containerRanges = nodesContainers.map(container =>
-    container.getTextRange()
-  );
+  const containerRanges = nodesContainers
+    .filter(container => !container.isEmpty())
+    .map(container => container.getTextRange());
 
   const startPosition = containerRanges.reduce(
     (min, textRange) => Math.min(min, textRange.pos),
@@ -25,7 +25,7 @@ export function getTextRange<TNode extends Node>(
   };
 }
 
-const notEmpty: Predicate<{ length: number }> = ({ length }) => length > 0;
+const notEmpty: Predicate<string> = str => str.length > 0;
 
 export function stringifyNodesContainers<TNode extends Node>(
   nodesContainers: NodesContainer<TNode>[]

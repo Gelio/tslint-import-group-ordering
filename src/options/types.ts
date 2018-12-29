@@ -1,6 +1,6 @@
-import { ImportDeclaration } from 'typescript';
+import { ImportDeclaration, Statement } from 'typescript';
 
-import { GuardedNodesContainer } from '../nodes-containers';
+import { GuardedNodesContainer, NodesContainer } from '../nodes-containers';
 
 export enum ImportsGroupType {
   ThirdParty = 'third-party',
@@ -29,14 +29,21 @@ export interface ProjectImportsGroup {
 
 export type ImportsGroup = ThirdPartyImportsGroup | ProjectImportsGroup;
 
-export interface IOptions {
+export interface Options {
   importsGroups: ImportsGroup[];
 }
 
-export interface IOptionsWithNodesContainers extends IOptions {
+export interface WalkerOptions extends Options {
   guardedNodesContainers: GuardedNodesContainer<ImportDeclaration>[];
+
+  /**
+   * A container for non-import statements that appear between import groups.
+   *
+   * Those should appear after all import groups.
+   */
+  misplacedNonImportStatementsContainer: NodesContainer<Statement>;
 }
 
-export interface IJsonOptions {
+export interface JsonOptions {
   'imports-groups': ImportsGroupConfig[];
 }

@@ -1,4 +1,6 @@
-// NOTE: NodeJS module names taken from @types/node
+/**
+ * NOTE: NodeJS module names taken from `@types/node`
+ */
 export const nodejsModules = [
   '_debugger',
   'assert',

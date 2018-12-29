@@ -1,7 +1,14 @@
 import { SourceFile, Node, TextRange } from 'typescript';
 
+/**
+ * A container for syntax nodes.
+ *
+ * Keeps track of the bounding text range of nodes.
+ */
 export interface NodesContainer<TNode extends Node> {
   addNode(node: TNode): void;
+  copyNodesFrom(otherNodesContainer: NodesContainer<TNode>): void;
+  isEmpty(): boolean;
   getTextRange(): TextRange;
   toString(): string;
 }
@@ -23,6 +30,15 @@ export class NodesContainer<TNode extends Node>
     this.updatePositions(node);
   }
 
+  public copyNodesFrom(otherNodesContainer: NodesContainer<TNode>) {
+    this.nodes.push(...otherNodesContainer.nodes);
+
+    const otherNodesTextRange = otherNodesContainer.getTextRange();
+
+    this.updateImportsStart(otherNodesTextRange.pos);
+    this.updateImportsEnd(otherNodesTextRange.end);
+  }
+
   public getTextRange(): TextRange {
     if (this.startPosition === undefined || this.endPosition === undefined) {
       throw new Error('No nodes have been added');
@@ -34,6 +50,10 @@ export class NodesContainer<TNode extends Node>
     };
   }
 
+  public isEmpty() {
+    return this.nodes.length === 0;
+  }
+
   public toString() {
     const { nodes, sourceFile } = this;
 
@@ -41,24 +61,23 @@ export class NodesContainer<TNode extends Node>
   }
 
   private updatePositions(node: TNode) {
-    this.updateImportsStart(node);
-    this.updateImportsEnd(node);
+    const nodeStart = node.getStart(this.sourceFile);
+    const nodeEnd = node.getEnd();
+
+    this.updateImportsStart(nodeStart);
+    this.updateImportsEnd(nodeEnd);
   }
 
-  private updateImportsStart(node: TNode) {
-    const nodeStart = node.getStart(this.sourceFile);
-
-    if (!this.startPosition) {
+  private updateImportsStart(nodeStart: number) {
+    if (this.startPosition === undefined) {
       this.startPosition = nodeStart;
     } else {
       this.startPosition = Math.min(this.startPosition, nodeStart);
     }
   }
 
-  private updateImportsEnd(node: TNode) {
-    const nodeEnd = node.getEnd();
-
-    if (!this.endPosition) {
+  private updateImportsEnd(nodeEnd: number) {
+    if (this.endPosition === undefined) {
       this.endPosition = nodeEnd;
     } else {
       this.endPosition = Math.max(this.endPosition, nodeEnd);

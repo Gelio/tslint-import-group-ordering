@@ -4,6 +4,7 @@ import * as Lint from 'tslint';
 import { ImportGroupsOrderingWalker } from './import-groups-ordering-walker';
 import { parseOptions } from './options/parse-options';
 import { createGuardedNodesContainers } from './options/create-guarded-nodes-containers';
+import { NodesContainer } from './nodes-containers';
 
 // TODO: fix description and examples
 export class Rule extends Lint.Rules.AbstractRule {
@@ -89,7 +90,8 @@ export class Rule extends Lint.Rules.AbstractRule {
     return this.applyWithWalker(
       new ImportGroupsOrderingWalker(sourceFile, this.ruleName, {
         ...options,
-        guardedNodesContainers
+        guardedNodesContainers,
+        misplacedNonImportStatementsContainer: new NodesContainer(sourceFile)
       })
     );
   }
