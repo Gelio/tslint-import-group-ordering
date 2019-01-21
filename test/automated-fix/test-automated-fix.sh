@@ -6,10 +6,10 @@ DIFF=$(diff -bur --color cases expected)
 rm cases -r
 mv cases-backup cases
 
-if (( $(grep -c . <<<"$DIFF") > 1 )); then
+if [ -z "$DIFF" ]; then
+  exit 0
+else
   echo "Diff is not empty. The test did not pass"
   echo "$DIFF"
   exit 1
-else
-  exit 0
 fi
