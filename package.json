@@ -8,7 +8,9 @@
     "prepublishOnly": "npm run build",
     "pretest": "npm run build",
     "test": "npm run test:only",
-    "test:only": "tslint --test test/automated/**/tslint.json"
+    "test:only": "npm run only:lint; npm run test:only:automated-fix",
+    "test:only:lint": "tslint --test test/automated/**/tslint.json",
+    "test:only:automated-fix": "cd test/automated-fix && ./test-automated-fix.sh"
   },
   "author": "Grzegorz Rozdzialik <voreny.gelio@gmail.com>",
   "license": "MIT",

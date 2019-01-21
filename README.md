@@ -55,3 +55,44 @@ import { SearchInput } from 'common/components/inputs';
 ```
 
 because `./interfaces` is imported too early.
+
+## Testing
+
+The project uses 3 types of tests. To run the automated tests, run
+
+```sh
+npm run test
+```
+
+This will build the project and run the tests. Alternatively, to only run the tests without building
+the project run
+
+```sh
+npm run test:only
+```
+
+### Automated lint tests
+
+These use the TSLint command to test whether the actual errors match the expected ones.
+
+First, build the rule using `npm run build` and then run:
+
+```sh
+npm run test:only:lint
+```
+
+to run the lint tests.
+
+See [TSLint's docs](https://palantir.github.io/tslint/develop/testing-rules/) for more information.
+
+### Automated autofix tests
+
+There apply the TSLint's autofix and compare the results with the expected ones.
+
+First, build the rule using `npm run build` and then run:
+
+```sh
+npm run test:only:automated-fix
+```
+
+to run the autofix tests.
