@@ -1,5 +1,5 @@
 {
-  "rulesDirectory": "../../dist",
+  "rulesDirectory": "../../../dist",
   "rules": {
     "import-group-ordering": {
       "severity": "warning",
@@ -10,11 +10,11 @@
           },
           {
             "type": "project",
-            "regExp": "/^(fabric|common)/"
+            "regExp": "^(fabric|common)"
           },
           {
             "type": "project",
-            "regExp": "/^(products)/"
+            "regExp": "^(products)"
           }
         ]
       }

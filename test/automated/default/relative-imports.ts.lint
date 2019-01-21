@@ -1,0 +1,10 @@
+import {} from 'utils';
+~~~~~~~~~~~~~~~~~~~~~~~
+import {} from './correct-order.ts.lint';
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ [This import declaration should appear in a later group (number 4)]
+import {} from '../../relative';
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+import {} from 'products';
+~~~~~~~~~~~~~~~~~~~~~~~~~~ [Invalid import groups order]
+~~~~~~~~~~~~~~~~~~~~~~~~~~ [This import declaration should appear in an earlier group (number 3)]

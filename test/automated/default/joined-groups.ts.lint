@@ -1,0 +1,8 @@
+import {} from 'fs';
+~~~~~~~~~~~~~~~~~~~~
+import {} from 'common';
+~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~ [This import declaration should appear in a later group (number 2)]
+import {} from 'products/some/path/here';
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ [Invalid import groups order]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ [This import declaration should appear in a later group (number 3)]

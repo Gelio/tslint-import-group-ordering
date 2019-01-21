@@ -5,7 +5,10 @@
   "main": "tslint-import-group-ordering.json",
   "scripts": {
     "build": "tsc",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "pretest": "npm run build",
+    "test": "npm run test:only",
+    "test:only": "tslint --test test/automated/**/tslint.json"
   },
   "author": "Grzegorz Rozdzialik <voreny.gelio@gmail.com>",
   "license": "MIT",
