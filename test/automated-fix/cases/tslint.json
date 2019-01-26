@@ -12,6 +12,9 @@
             "name": "fabric and common"
           },
           {
+            "name": "utils"
+          },
+          {
             "name": "product"
           },
           {
@@ -26,8 +29,13 @@
           },
           {
             "type": "project",
-            "matches": "^(products)",
+            "matches": "^(product)",
             "imports-group": "product"
+          },
+          {
+            "type": "project",
+            "matches": "^(util)",
+            "imports-group": "utils"
           },
           {
             "type": "dependencies",
