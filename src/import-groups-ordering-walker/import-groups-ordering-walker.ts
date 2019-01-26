@@ -14,7 +14,6 @@ export class ImportGroupsOrderingWalker extends Lint.AbstractWalker<
 > {
   private currentImportsGroupOrderNumber = 1;
   private allowNextImportsGroup = true;
-  private hasEncounteredImportStatement = false;
   private foundUnmatchedImportDeclaration = false;
 
   private possiblyMisplacedNonImportStatements = new NodesContainer<
@@ -42,10 +41,8 @@ export class ImportGroupsOrderingWalker extends Lint.AbstractWalker<
       }
       this.checkImportDeclaration(statement);
       this.allowNextImportsGroup = false;
-      this.hasEncounteredImportStatement = true;
     } else {
-      // console.log(statement);
-      // this.possiblyMisplacedNonImportStatements.addNode(statement);
+      this.possiblyMisplacedNonImportStatements.addNode(statement);
     }
   }
 
@@ -113,21 +110,19 @@ export class ImportGroupsOrderingWalker extends Lint.AbstractWalker<
   }
 
   private handleMisplacedNonImportStatements() {
-    if (this.hasEncounteredImportStatement) {
-      const {
-        pos,
-        end
-      } = this.possiblyMisplacedNonImportStatements.getTextRange();
-      this.addFailureAt(
-        pos,
-        end - pos,
-        'Non-import statements should not appear between import groups'
-      );
+    const {
+      pos,
+      end
+    } = this.possiblyMisplacedNonImportStatements.getTextRange();
+    this.addFailureAt(
+      pos,
+      end - pos,
+      'Non-import statements should not appear between import groups'
+    );
 
-      this.options.misplacedNonImportStatementsContainer.copyNodesFrom(
-        this.possiblyMisplacedNonImportStatements
-      );
-    }
+    this.options.misplacedNonImportStatementsContainer.copyNodesFrom(
+      this.possiblyMisplacedNonImportStatements
+    );
 
     this.possiblyMisplacedNonImportStatements = new NodesContainer(
       this.getSourceFile()

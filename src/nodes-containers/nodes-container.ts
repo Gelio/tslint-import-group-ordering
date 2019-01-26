@@ -57,7 +57,15 @@ export class NodesContainer<TNode extends Node>
   public toString() {
     const { nodes, sourceFile } = this;
 
-    return nodes.map(node => node.getText(sourceFile)).join('\n');
+    /**
+     * NOTE: using `getFullText` preserves comments. It also preserves all the whitespace.
+     * That is why multiple newlines have to be collapsed and the output has to be trimmed.
+     */
+    const rawOutput = nodes
+      .map(node => node.getFullText(sourceFile))
+      .join('\n');
+
+    return trimAndCollapseNewLines(rawOutput);
   }
 
   private updatePositions(node: TNode) {
@@ -84,3 +92,6 @@ export class NodesContainer<TNode extends Node>
     }
   }
 }
+
+const trimAndCollapseNewLines = (text: string) =>
+  text.replace(/(\\n)+/, '\n').trim();
