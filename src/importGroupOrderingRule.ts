@@ -5,13 +5,24 @@ import { ImportGroupsOrderingWalker } from './import-groups-ordering-walker';
 import { NodesContainer } from './nodes-containers';
 import { parseRuleConfig } from './options/parse-rule-config';
 
-// TODO: fix description and examples
 export class Rule extends Lint.Rules.AbstractRule {
   public static metadata: Lint.IRuleMetadata = {
     ruleName: 'import-group-ordering',
     description: 'Ensures a specific ordering of import groups.',
     optionsDescription: Lint.Utils.dedent`
-      TODO: fill it
+      The imports groups are configured via the "imports-groups" property. It is an array
+      that specifies the names of consecutive imports groups.
+
+      Then, use the "matching-rules" property to configure which import declarations belong
+      to which imports groups.
+
+      A matching rule can be either a rule that matches the projects dependencies (installed
+      node modules and NodeJS native modules) or specific project files, configured
+      with a regular expression (regexp).
+
+      Each import statement is tested against consecutive matching rules. It it matches
+      a specific matching rule, that import statement belongs to an imports group defined
+      in the matching rule.
     `,
     hasFix: true,
     options: {
@@ -66,11 +77,44 @@ export class Rule extends Lint.Rules.AbstractRule {
       additionalProperties: false
     },
     optionExamples: [
-      // TODO:
       [
         true,
         {
-          'groups-order': ['/^(fabric|common)/', '/^products/']
+          'imports-groups': [
+            {
+              name: 'dependencies'
+            },
+            {
+              name: 'fabric and common'
+            },
+            {
+              name: 'product'
+            },
+            {
+              name: 'other'
+            }
+          ],
+          'matching-rules': [
+            {
+              type: 'project',
+              matches: '^(fabric|common)',
+              'imports-group': 'fabric and common'
+            },
+            {
+              type: 'project',
+              matches: '^(products)',
+              'imports-group': 'product'
+            },
+            {
+              type: 'dependencies',
+              'imports-group': 'dependencies'
+            },
+            {
+              type: 'project',
+              matches: '.*',
+              'imports-group': 'other'
+            }
+          ]
         }
       ]
     ],
@@ -79,6 +123,10 @@ export class Rule extends Lint.Rules.AbstractRule {
   };
 
   public apply(sourceFile: SourceFile): Lint.RuleFailure[] {
+    if (this.ruleArguments.length === 0) {
+      throw new Error('Rule configuration is required.');
+    }
+
     const { importsGroups, matchingRules } = parseRuleConfig(
       sourceFile,
       this.ruleArguments[0]
