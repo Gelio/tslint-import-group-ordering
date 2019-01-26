@@ -1,49 +1,46 @@
-import { ImportDeclaration, Statement } from 'typescript';
+import { ImportDeclaration } from 'typescript';
 
-import { GuardedNodesContainer, NodesContainer } from '../nodes-containers';
+import { NodesContainer, Predicate } from '../nodes-containers';
 
 export enum ImportsGroupType {
-  ThirdParty = 'third-party',
+  Dependencies = 'dependencies',
   Project = 'project'
 }
 
-export interface ThirdPartyImportsGroupConfig {
-  type: ImportsGroupType.ThirdParty;
+export interface ImportsGroupConfig {
+  name: string;
 }
 
-export interface ProjectImportsGroupConfig {
+interface SharedMatchingRuleConfig {
+  'imports-group': string;
+}
+
+interface DependenciesMatchingRuleConfig extends SharedMatchingRuleConfig {
+  // TODO: allow enabling/disabling nodejs modules
+  type: ImportsGroupType.Dependencies;
+}
+
+interface ProjectMatchingRuleConfig extends SharedMatchingRuleConfig {
   type: ImportsGroupType.Project;
-  regExp: string;
+  matches: string;
 }
 
-export type ImportsGroupConfig =
-  | ThirdPartyImportsGroupConfig
-  | ProjectImportsGroupConfig;
+export type MatchingRuleConfig =
+  | DependenciesMatchingRuleConfig
+  | ProjectMatchingRuleConfig;
 
-export type ThirdPartyImportsGroup = ThirdPartyImportsGroupConfig;
-
-export interface ProjectImportsGroup {
-  type: ImportsGroupType.Project;
-  regExp: RegExp;
-}
-
-export type ImportsGroup = ThirdPartyImportsGroup | ProjectImportsGroup;
-
-export interface Options {
-  importsGroups: ImportsGroup[];
-}
-
-export interface WalkerOptions extends Options {
-  guardedNodesContainers: GuardedNodesContainer<ImportDeclaration>[];
-
-  /**
-   * A container for non-import statements that appear between import groups.
-   *
-   * Those should appear after all import groups.
-   */
-  misplacedNonImportStatementsContainer: NodesContainer<Statement>;
-}
-
-export interface JsonOptions {
+export interface RuleConfig {
   'imports-groups': ImportsGroupConfig[];
+  'matching-rules': MatchingRuleConfig[];
+}
+
+export interface ImportsGroup {
+  name: string;
+  nodesContainer: NodesContainer<ImportDeclaration>;
+  orderNumber: number;
+}
+
+export interface MatchingRule {
+  importsGroup: ImportsGroup;
+  matches: Predicate<ImportDeclaration>;
 }

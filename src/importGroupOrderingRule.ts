@@ -1,30 +1,17 @@
-import * as ts from 'typescript';
+import { SourceFile } from 'typescript';
 import * as Lint from 'tslint';
 
 import { ImportGroupsOrderingWalker } from './import-groups-ordering-walker';
-import { parseOptions } from './options/parse-options';
-import { createGuardedNodesContainers } from './options/create-guarded-nodes-containers';
 import { NodesContainer } from './nodes-containers';
+import { parseRuleConfig } from './options/parse-rule-config';
 
 // TODO: fix description and examples
 export class Rule extends Lint.Rules.AbstractRule {
   public static metadata: Lint.IRuleMetadata = {
     ruleName: 'import-group-ordering',
-    description:
-      'Requires specific ordering of import groups. Requires third party import to be in the first group.',
+    description: 'Ensures a specific ordering of import groups.',
     optionsDescription: Lint.Utils.dedent`
-      The "groups-order" options should contain strings with regular expressions that describe module
-      specifiers (paths) allowed in consecutive import groups.
-
-      Imports from libraries (from "node_modules") will always be in the first group.
-
-      The last group will contain the rest of the import statements.
-
-      Possible values for \`resolution-order\` are:
-      * \`'dependencies-first'\` - a module specifier will first be checked if it is a third party
-          dependency and belongs to the first group. **This is the default behavior**
-      * \`'project-first\` - the module specifier will be checked if it is a third party dependency
-          only if it does not match any project module.
+      TODO: fill it
     `,
     hasFix: true,
     options: {
@@ -34,11 +21,25 @@ export class Rule extends Lint.Rules.AbstractRule {
           type: 'array',
           items: {
             type: 'object',
+            properties: {
+              name: {
+                type: 'string'
+              }
+            }
+          }
+        },
+        'matching-rules': {
+          type: 'array',
+          items: {
+            type: 'object',
             oneOf: [
               {
                 properties: {
                   type: {
-                    const: 'third-party'
+                    const: 'dependencies'
+                  },
+                  'imports-group': {
+                    type: 'string'
                   }
                 },
                 additionalProperties: false
@@ -48,7 +49,10 @@ export class Rule extends Lint.Rules.AbstractRule {
                   type: {
                     const: 'project'
                   },
-                  regExp: {
+                  'imports-group': {
+                    type: 'string'
+                  },
+                  matches: {
                     type: 'string'
                   }
                 },
@@ -58,21 +62,15 @@ export class Rule extends Lint.Rules.AbstractRule {
           }
         }
       },
-      required: ['imports-groups'],
+      required: ['imports-groups', 'matching-rules'],
       additionalProperties: false
     },
     optionExamples: [
+      // TODO:
       [
         true,
         {
           'groups-order': ['/^(fabric|common)/', '/^products/']
-        }
-      ],
-      [
-        true,
-        {
-          'groups-order': ['/^utils/', '/^products/'],
-          'resolution-order': 'project-first'
         }
       ]
     ],
@@ -80,17 +78,16 @@ export class Rule extends Lint.Rules.AbstractRule {
     typescriptOnly: false
   };
 
-  public apply(sourceFile: ts.SourceFile): Lint.RuleFailure[] {
-    const options = parseOptions(this.ruleArguments);
-    const guardedNodesContainers = createGuardedNodesContainers(
-      options,
-      sourceFile
+  public apply(sourceFile: SourceFile): Lint.RuleFailure[] {
+    const { importsGroups, matchingRules } = parseRuleConfig(
+      sourceFile,
+      this.ruleArguments[0]
     );
 
     return this.applyWithWalker(
       new ImportGroupsOrderingWalker(sourceFile, this.ruleName, {
-        ...options,
-        guardedNodesContainers,
+        importsGroups,
+        matchingRules,
         misplacedNonImportStatementsContainer: new NodesContainer(sourceFile)
       })
     );

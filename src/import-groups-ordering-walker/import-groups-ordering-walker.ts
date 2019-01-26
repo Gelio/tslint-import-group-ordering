@@ -1,52 +1,37 @@
 import * as Lint from 'tslint';
 import * as ts from 'typescript';
 
-import { WalkerOptions } from '../options/types';
 import {
   getBoundingTextRange,
   stringifyNodesContainers
 } from '../nodes-containers/nodes-containers-utils';
 import { NodesContainer } from '../nodes-containers';
+import { WalkerOptions } from './walker-options';
+import { ImportsGroup } from '../options/types';
 
 export class ImportGroupsOrderingWalker extends Lint.AbstractWalker<
   WalkerOptions
 > {
-  private currentImportGroupIndex = 0;
+  private currentImportsGroupOrderNumber = 1;
   private allowNextImportsGroup = true;
   private hasEncounteredImportStatement = false;
+  private foundUnmatchedImportDeclaration = false;
 
   private possiblyMisplacedNonImportStatements = new NodesContainer<
     ts.Statement
   >(this.getSourceFile());
 
-  public walk(sourceFile: ts.SourceFile): void {
+  public walk(sourceFile: ts.SourceFile) {
     for (const statement of sourceFile.statements) {
       this.checkStatement(statement);
     }
 
-    if (this.failures.length > 0) {
-      const {
-        guardedNodesContainers,
-        misplacedNonImportStatementsContainer
-      } = this.options;
-      const allNodesContainers = [
-        ...guardedNodesContainers,
-        misplacedNonImportStatementsContainer
-      ];
-
-      const { pos, end } = getBoundingTextRange(allNodesContainers);
-      const orderedImportGroups = stringifyNodesContainers(allNodesContainers);
-
-      this.addFailure(
-        pos,
-        end,
-        'Invalid import groups order',
-        new Lint.Replacement(pos, end - pos, orderedImportGroups)
-      );
+    if (this.failures.length > 0 && !this.foundUnmatchedImportDeclaration) {
+      this.addFailureWithAutoFix();
     }
   }
 
-  private checkStatement(statement: ts.Statement): void {
+  private checkStatement(statement: ts.Statement) {
     if (this.isStatementAfterEmptyLine(statement)) {
       this.endBlock();
     }
@@ -77,46 +62,49 @@ export class ImportGroupsOrderingWalker extends Lint.AbstractWalker<
 
   private checkImportDeclaration(node: ts.ImportDeclaration) {
     if (!ts.isStringLiteral(node.moduleSpecifier)) {
-      // Ignore grammar error
+      // NOTE: Ignore grammar error
       return;
     }
 
-    const { guardedNodesContainers } = this.options;
-    const matchingContainerIndex = guardedNodesContainers.findIndex(
-      nodesContainer => nodesContainer.matches(node)
+    const { matchingRules } = this.options;
+    const foundMatchingRule = matchingRules.find(matchingRule =>
+      matchingRule.matches(node)
     );
 
-    if (matchingContainerIndex === -1) {
-      // NOTE: this should never happen as the last group should accept every import statement
+    if (!foundMatchingRule) {
+      this.addFailureAtNode(
+        node,
+        'The import declaration does not match any configured import groups'
+      );
+      this.foundUnmatchedImportDeclaration = true;
+
       return;
     }
 
-    const matchingContainer = guardedNodesContainers[matchingContainerIndex];
-    matchingContainer.addNode(node);
+    const matchingImportsGroup = foundMatchingRule.importsGroup;
+    matchingImportsGroup.nodesContainer.addNode(node);
 
-    this.verifyImportGroupIndex(matchingContainerIndex, node);
+    this.verifyImportsGroupOrder(matchingImportsGroup, node);
   }
 
-  private verifyImportGroupIndex(
-    importGroupIndex: number,
+  private verifyImportsGroupOrder(
+    { orderNumber, name }: ImportsGroup,
     node: ts.ImportDeclaration
   ) {
-    // TODO: display names of import groups in the error messages
-    const importGroupNumber = importGroupIndex + 1;
-
-    if (importGroupIndex < this.currentImportGroupIndex) {
+    if (orderNumber < this.currentImportsGroupOrderNumber) {
       this.addFailureAtNode(
         node,
-        `This import declaration should appear in an earlier group (number ${importGroupNumber})`
+        `This import declaration should appear in an earlier group ("${name}", number ${orderNumber})`
       );
-    } else if (importGroupIndex > this.currentImportGroupIndex) {
+    } else if (orderNumber > this.currentImportsGroupOrderNumber) {
       if (!this.allowNextImportsGroup) {
         this.addFailureAtNode(
           node,
-          `This import declaration should appear in a later group (number ${importGroupNumber})`
+          `This import declaration should appear in a later group ("${name}", number ${orderNumber})`
         );
       }
-      this.currentImportGroupIndex = importGroupIndex;
+
+      this.currentImportsGroupOrderNumber = orderNumber;
     }
   }
 
@@ -143,6 +131,28 @@ export class ImportGroupsOrderingWalker extends Lint.AbstractWalker<
 
     this.possiblyMisplacedNonImportStatements = new NodesContainer(
       this.getSourceFile()
+    );
+  }
+
+  private addFailureWithAutoFix() {
+    const {
+      importsGroups,
+      misplacedNonImportStatementsContainer
+    } = this.options;
+
+    const allNodesContainers = [
+      ...importsGroups.map(importsGroup => importsGroup.nodesContainer),
+      misplacedNonImportStatementsContainer
+    ];
+
+    const { pos, end } = getBoundingTextRange(allNodesContainers);
+    const orderedImportGroups = stringifyNodesContainers(allNodesContainers);
+
+    this.addFailure(
+      pos,
+      end,
+      'Invalid import groups order',
+      new Lint.Replacement(pos, end - pos, orderedImportGroups)
     );
   }
 }
