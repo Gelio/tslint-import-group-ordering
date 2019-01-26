@@ -1,5 +1,7 @@
 node_modules
 src
+test
+azore-pipelines.yml
 .gitignore
 tsconfig.json
 tslint.json
