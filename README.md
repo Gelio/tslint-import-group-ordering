@@ -1,16 +1,26 @@
 # TSLint import group ordering rule
 
 [![npm](https://img.shields.io/npm/dw/tslint-import-group-ordering.svg)](https://www.npmjs.com/package/tslint-import-group-ordering)
+
 [![GitHub stars](https://img.shields.io/github/stars/Gelio/tslint-import-group-ordering.svg)](https://github.com/Gelio/tslint-import-group-ordering/stargazers)
+
 [![GitHub license](https://img.shields.io/github/license/Gelio/tslint-import-group-ordering.svg)](https://github.com/Gelio/tslint-import-group-ordering)
+
 [![Twitter](https://img.shields.io/twitter/url/https/github.com/Gelio/tslint-import-group-ordering/.svg?style=social)](https://twitter.com/intent/tweet?text=Wow:&url=https%3A%2F%2Fgithub.com%2FGelio%2Ftslint-import-group-ordering%2F)
 
-This rule enforces import groups ordering.
+- enforces imports groups ordering
+- highly configurable
 
-It allows specifying which regular expressions that imports in consecutive import groups should
-follow.
+  Use regular expressions to configure which import statements go into which import group.
 
-This rule assumes that external libraries come in the first import group.
+- support for determining `package.json` dependencies
+- has an auto-fixer
+
+  - preserves comments
+  - preserves non-import statements that appear in-between import statements
+
+    Even though it is against the ECMAScript Modules specification. The rule will not break your
+    code.
 
 ## Usage
 
@@ -29,7 +39,41 @@ Modify `tslint.json` (add `extends` and the rule configuration to `rules`):
     "import-group-ordering": {
       "severity": "warning",
       "options": {
-        "groups-order": ["^(fabric|common)", "^products"]
+        "imports-groups": [
+          {
+            "name": "dependencies"
+          },
+          {
+            "name": "common"
+          },
+          {
+            "name": "product"
+          },
+          {
+            "name": "other"
+          }
+        ],
+        "matching-rules": [
+          {
+            "type": "project",
+            "matches": "^(common)",
+            "imports-group": "common"
+          },
+          {
+            "type": "project",
+            "matches": "^(product)",
+            "imports-group": "product"
+          },
+          {
+            "type": "dependencies",
+            "imports-group": "dependencies"
+          },
+          {
+            "type": "project",
+            "matches": ".*",
+            "imports-group": "other"
+          }
+        ]
       }
     }
   }
@@ -38,8 +82,8 @@ Modify `tslint.json` (add `extends` and the rule configuration to `rules`):
 
 The above configuration would enforce the following import group order:
 
-- external libraries
-- anything that starts with `fabric` or `common`
+- dependencies from `node_modules` (or NodeJS native modules)
+- anything that starts with `common`
 - anything that starts wtih `products`
 - other imports
 
@@ -96,3 +140,12 @@ npm run test:only:automated-fix
 ```
 
 to run the autofix tests.
+
+### Manual tests
+
+Open the `test/manual` directory to perform manual tests, e.g. use your IDE or the `tslint` CLI
+directly.
+
+## Author
+
+The author of this rule is Grzegorz Rozdzialik.
