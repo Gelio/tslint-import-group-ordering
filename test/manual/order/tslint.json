@@ -9,10 +9,7 @@
             "name": "dependencies"
           },
           {
-            "name": "fabric and common"
-          },
-          {
-            "name": "product"
+            "name": "utils"
           },
           {
             "name": "other"
@@ -21,13 +18,8 @@
         "matching-rules": [
           {
             "type": "project",
-            "matches": "^(fabric|common)",
-            "imports-group": "fabric and common"
-          },
-          {
-            "type": "project",
-            "matches": "^(products)",
-            "imports-group": "product"
+            "matches": "^(util)",
+            "imports-group": "utils"
           },
           {
             "type": "dependencies",

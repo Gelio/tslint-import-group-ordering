@@ -6,4 +6,6 @@ import {} from 'common/lulz';
 
 import * as Products from 'products';
 
+import {} from './relative-import';
+
 const variable = 'a';
