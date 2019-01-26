@@ -1,3 +1,5 @@
+#!/bin/bash
+
 cp cases cases-backup -r
 
 (cd ../.. && npx tslint test/automated-fix/cases/tslint.json test/automated-fix/cases/*.ts --fix)
