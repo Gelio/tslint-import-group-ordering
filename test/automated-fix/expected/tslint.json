@@ -6,15 +6,37 @@
       "options": {
         "imports-groups": [
           {
-            "type": "third-party"
+            "name": "dependencies"
+          },
+          {
+            "name": "fabric and common"
+          },
+          {
+            "name": "product"
+          },
+          {
+            "name": "other"
+          }
+        ],
+        "matching-rules": [
+          {
+            "type": "project",
+            "matches": "^(fabric|common)",
+            "imports-group": "fabric and common"
           },
           {
             "type": "project",
-            "regExp": "^(fabric|common)"
+            "matches": "^(products)",
+            "imports-group": "product"
+          },
+          {
+            "type": "dependencies",
+            "imports-group": "dependencies"
           },
           {
             "type": "project",
-            "regExp": "^(products)"
+            "matches": ".*",
+            "imports-group": "other"
           }
         ]
       }
