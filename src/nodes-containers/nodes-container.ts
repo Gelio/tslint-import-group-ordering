@@ -94,4 +94,4 @@ export class NodesContainer<TNode extends Node>
 }
 
 const trimAndCollapseNewLines = (text: string) =>
-  text.replace(/\n+/g, '\n').trim();
+  text.replace(/(\r?\n)+/g, '\n').trim();
