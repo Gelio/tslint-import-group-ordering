@@ -2,7 +2,7 @@
 
 cp cases cases-backup -r
 
-(cd ../.. && npx tslint test/automated-fix/cases/tslint.json test/automated-fix/cases/*.ts --fix)
+(cd ../.. && npx tslint -c test/automated-fix/tslint.json test/automated-fix/cases/*.ts --fix)
 
 DIFF=$(diff -bur --color cases expected)
 rm cases -r
