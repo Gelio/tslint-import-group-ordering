@@ -2,6 +2,7 @@ node_modules
 src
 test
 azore-pipelines.yml
+.vscode
 .gitignore
 tsconfig.json
 tslint.json
