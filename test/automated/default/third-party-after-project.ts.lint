@@ -2,4 +2,4 @@ import {} from 'fabric/abc';
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 import {} from 'utils';
 ~~~~~~~~~~~~~~~~~~~~~~~ [Invalid import groups order]
-~~~~~~~~~~~~~~~~~~~~~~~  [This import declaration should appear in an earlier group (number 1)]
+~~~~~~~~~~~~~~~~~~~~~~~  [This import declaration should appear in an earlier group ("dependencies", number 1)]

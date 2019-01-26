@@ -1,0 +1,25 @@
+{
+  "rulesDirectory": "../../../dist",
+  "rules": {
+    "import-group-ordering": {
+      "severity": "warning",
+      "options": {
+        "imports-groups": [
+          {
+            "name": "product"
+          },
+          {
+            "name": "other"
+          }
+        ],
+        "matching-rules": [
+          {
+            "type": "project",
+            "matches": "^(product)",
+            "imports-group": "product"
+          }
+        ]
+      }
+    }
+  }
+}
