@@ -4,12 +4,18 @@
 
 - Allow disabling treating native NodeJS modules as dependencies.
 
+  Set `disable-native-nodejs-modules` on a given matching rule to activate.
+
 - Fix handling leading import declaration comments. They will no longer be duplicated when using the
   auto-fix.
 
 - Performance improvements.
 
   Node positions will no longer be recalculated upon encountering new nodes.
+
+- Support for reading dependencies and devDependencies from `package.json` instead of reading the
+  contents of `node_modules`. This is configured by setting `from-package.json` on a specific
+  matching-rule.
 
 ## v2.0.0 (1/26/2019)
 
@@ -20,8 +26,8 @@
 
 ### Features
 
-- The rule is much more configurable. It supports multiple matching rules for a given imports
-  group. Dependencies do not have to appear in the first import group.
+- The rule is much more configurable. It supports multiple matching rules for a given imports group.
+  Dependencies do not have to appear in the first import group.
 
 - Improved error messages. Error messages now contain the expected imports group name.
 
