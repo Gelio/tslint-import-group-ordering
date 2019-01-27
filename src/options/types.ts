@@ -15,12 +15,14 @@ interface SharedMatchingRuleConfig {
   'imports-group': string;
 }
 
-interface DependenciesMatchingRuleConfig extends SharedMatchingRuleConfig {
-  // TODO: allow enabling/disabling nodejs modules
+export interface DependenciesMatchingRuleConfig
+  extends SharedMatchingRuleConfig {
   type: ImportsGroupType.Dependencies;
+  'disable-native-nodejs-modules'?: boolean;
+  'from-package.json'?: boolean;
 }
 
-interface ProjectMatchingRuleConfig extends SharedMatchingRuleConfig {
+export interface ProjectMatchingRuleConfig extends SharedMatchingRuleConfig {
   type: ImportsGroupType.Project;
   matches: string;
 }
