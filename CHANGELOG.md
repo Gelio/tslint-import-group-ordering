@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.1.1 (1/27/2019)
+
+- Fix parsing `package.json` that does not have either `devDependencies` or `dependencies` at all.
+
 ## v2.1.0 (1/27/2019)
 
 - Allow disabling treating native NodeJS modules as dependencies.
