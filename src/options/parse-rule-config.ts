@@ -1,16 +1,14 @@
-import { SourceFile, ImportDeclaration } from 'typescript';
+import { SourceFile } from 'typescript';
 
 import {
   RuleConfig,
   ImportsGroupConfig,
   ImportsGroup,
   MatchingRuleConfig,
-  MatchingRule,
-  ImportsGroupType
+  MatchingRule
 } from './types';
-import { NodesContainer, Predicate } from '../nodes-containers';
-import { getLibraries } from '../utils/get-libraries';
-import { removeQuotes } from '../utils/remove-quotes';
+import { NodesContainer } from '../nodes-containers';
+import { getImportsGroupPredicate } from './get-imports-group-predicate';
 
 export function parseRuleConfig(
   sourceFile: SourceFile,
@@ -92,39 +90,4 @@ function parseMatchingRuleConfigs(
       };
     }
   );
-}
-
-function getImportsGroupPredicate(
-  sourceFile: SourceFile,
-  matchingRuleConfig: MatchingRuleConfig
-): Predicate<ImportDeclaration> {
-  if (matchingRuleConfig.type === ImportsGroupType.Dependencies) {
-    return isThirdPartyImportDeclaration(sourceFile);
-  }
-
-  return importDeclarationMatchesRegExpFactory(
-    sourceFile,
-    new RegExp(matchingRuleConfig.matches)
-  );
-}
-
-const isThirdPartyImportDeclarationFactory = (thirdPartyRegExps: RegExp[]) => (
-  sourceFile: SourceFile
-): Predicate<ImportDeclaration> => node =>
-  thirdPartyRegExps.some(regExp =>
-    regExp.test(getModuleSpecifier(sourceFile, node))
-  );
-
-const isThirdPartyImportDeclaration = isThirdPartyImportDeclarationFactory(
-  getLibraries()
-);
-
-const importDeclarationMatchesRegExpFactory = (
-  sourceFile: SourceFile,
-  regExp: RegExp
-): Predicate<ImportDeclaration> => node =>
-  regExp.test(getModuleSpecifier(sourceFile, node));
-
-function getModuleSpecifier(sourceFile: SourceFile, node: ImportDeclaration) {
-  return removeQuotes(node.moduleSpecifier.getText(sourceFile));
 }
