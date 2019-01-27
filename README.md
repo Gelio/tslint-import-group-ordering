@@ -6,6 +6,8 @@
 [![Twitter](https://img.shields.io/twitter/url/https/github.com/Gelio/tslint-import-group-ordering/.svg?style=social)](https://twitter.com/intent/tweet?text=Wow:&url=https%3A%2F%2Fgithub.com%2FGelio%2Ftslint-import-group-ordering%2F)
 [![Build Status](https://dev.azure.com/vorenygelio/vorenygelio/_apis/build/status/Gelio.tslint-import-group-ordering?branchName=master)](https://dev.azure.com/vorenygelio/vorenygelio/_build/latest?definitionId=1?branchName=master)
 
+![Demo](https://imgur.com/download/DBMMoA6)
+
 - enforces imports groups ordering
 - highly configurable
 
