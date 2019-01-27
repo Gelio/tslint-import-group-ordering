@@ -9,7 +9,8 @@ import {
 import { Predicate } from '../nodes-containers';
 import {
   getNodeJsModulesRegExps,
-  getNodeModulesRegExps
+  getNodeModulesRegExps,
+  getPackageJsonDependenciesRegExps
 } from '../utils/get-dependencies-reg-exps';
 import { removeQuotes } from '../utils/remove-quotes';
 
@@ -36,7 +37,9 @@ function getDependenciesImportsGroupPredicate(
   sourceFile: SourceFile,
   matchingRuleConfig: DependenciesMatchingRuleConfig
 ) {
-  const regExps = getNodeModulesRegExps();
+  const regExps = matchingRuleConfig['from-package.json']
+    ? getPackageJsonDependenciesRegExps()
+    : getNodeModulesRegExps();
 
   if (!matchingRuleConfig['disable-native-nodejs-modules']) {
     regExps.push(...getNodeJsModulesRegExps());
