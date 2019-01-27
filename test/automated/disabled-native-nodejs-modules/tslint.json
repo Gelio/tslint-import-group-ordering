@@ -1,0 +1,38 @@
+{
+  "rulesDirectory": "../../../dist",
+  "rules": {
+    "import-group-ordering": {
+      "severity": "warning",
+      "options": {
+        "imports-groups": [
+          {
+            "name": "dependencies"
+          },
+          {
+            "name": "relative"
+          },
+          {
+            "name": "other"
+          }
+        ],
+        "matching-rules": [
+          {
+            "type": "dependencies",
+            "imports-group": "dependencies",
+            "disable-native-nodejs-modules": true
+          },
+          {
+            "type": "project",
+            "matches": "\\.",
+            "imports-group": "relative"
+          },
+          {
+            "type": "project",
+            "matches": ".*",
+            "imports-group": "other"
+          }
+        ]
+      }
+    }
+  }
+}
