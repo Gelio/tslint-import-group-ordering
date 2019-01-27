@@ -18,35 +18,34 @@ export class NodesContainer<TNode extends Node>
   private readonly nodes: TNode[] = [];
   private readonly sourceFile: SourceFile;
 
-  private startPosition?: number;
-  private endPosition?: number;
-
   constructor(sourceFile: SourceFile) {
     this.sourceFile = sourceFile;
   }
 
+  /**
+   * Nodes should be added in the order they appear in the source file.
+   * @param node
+   */
   public addNode(node: TNode) {
     this.nodes.push(node);
-    this.updatePositions(node);
   }
 
   public copyNodesFrom(otherNodesContainer: NodesContainer<TNode>) {
     this.nodes.push(...otherNodesContainer.nodes);
-
-    const otherNodesTextRange = otherNodesContainer.getTextRange();
-
-    this.updateImportsStart(otherNodesTextRange.pos);
-    this.updateImportsEnd(otherNodesTextRange.end);
+    this.sortNodesByAscendingPosition();
   }
 
   public getTextRange(): TextRange {
-    if (this.startPosition === undefined || this.endPosition === undefined) {
+    if (this.isEmpty()) {
       throw new Error('No nodes have been added');
     }
 
+    const firstNode = this.nodes[0];
+    const lastNode = this.nodes[this.nodes.length - 1];
+
     return {
-      pos: this.startPosition,
-      end: this.endPosition
+      pos: firstNode.getFullStart(),
+      end: lastNode.getEnd()
     };
   }
 
@@ -68,28 +67,10 @@ export class NodesContainer<TNode extends Node>
     return trimAndCollapseNewLines(rawOutput);
   }
 
-  private updatePositions(node: TNode) {
-    const nodeStart = node.getStart(this.sourceFile);
-    const nodeEnd = node.getEnd();
-
-    this.updateImportsStart(nodeStart);
-    this.updateImportsEnd(nodeEnd);
-  }
-
-  private updateImportsStart(nodeStart: number) {
-    if (this.startPosition === undefined) {
-      this.startPosition = nodeStart;
-    } else {
-      this.startPosition = Math.min(this.startPosition, nodeStart);
-    }
-  }
-
-  private updateImportsEnd(nodeEnd: number) {
-    if (this.endPosition === undefined) {
-      this.endPosition = nodeEnd;
-    } else {
-      this.endPosition = Math.max(this.endPosition, nodeEnd);
-    }
+  private sortNodesByAscendingPosition() {
+    this.nodes.sort(
+      (a, b) => a.getStart(this.sourceFile) - b.getStart(this.sourceFile)
+    );
   }
 }
 
