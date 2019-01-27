@@ -6,3 +6,5 @@ azure-pipelines.yml
 .gitignore
 tsconfig.json
 tslint.json
+.prettierrc
+.editorconfig
