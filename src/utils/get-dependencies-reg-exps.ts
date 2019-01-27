@@ -32,8 +32,10 @@ function readDependenciesFromPackageJson() {
   try {
     const parsedPackageJson = JSON.parse(packageJsonContents);
 
-    const dependencies = Object.keys(parsedPackageJson.dependencies);
-    const devDependencies = Object.keys(parsedPackageJson.devDependencies);
+    const dependencies = Object.keys(parsedPackageJson.dependencies || {});
+    const devDependencies = Object.keys(
+      parsedPackageJson.devDependencies || {}
+    );
 
     return [...dependencies, ...devDependencies];
   } catch (error) {

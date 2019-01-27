@@ -1,6 +1,6 @@
 {
   "name": "tslint-import-group-ordering",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "description": "TSLint rule for ordering import groups",
   "main": "tslint-import-group-ordering.json",
   "scripts": {
