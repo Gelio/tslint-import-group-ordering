@@ -51,9 +51,13 @@ export class Rule extends Lint.Rules.AbstractRule {
                   },
                   'imports-group': {
                     type: 'string'
+                  },
+                  'disable-native-nodejs-modules': {
+                    type: 'boolean'
                   }
                 },
-                additionalProperties: false
+                additionalProperties: false,
+                required: ['type', 'imports-group']
               },
               {
                 properties: {
@@ -67,7 +71,8 @@ export class Rule extends Lint.Rules.AbstractRule {
                     type: 'string'
                   }
                 },
-                additionalProperties: false
+                additionalProperties: false,
+                required: ['type', 'imports-group', 'matches']
               }
             ]
           }
@@ -107,7 +112,8 @@ export class Rule extends Lint.Rules.AbstractRule {
             },
             {
               type: 'dependencies',
-              'imports-group': 'dependencies'
+              'imports-group': 'dependencies',
+              'disable-native-nodejs-modules': true
             },
             {
               type: 'project',

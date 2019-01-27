@@ -64,7 +64,8 @@ Modify `tslint.json` (add `extends` and the rule configuration to `rules`):
           },
           {
             "type": "dependencies",
-            "imports-group": "dependencies"
+            "imports-group": "dependencies",
+            "disable-native-nodejs-modules": true
           },
           {
             "type": "project",
@@ -80,7 +81,8 @@ Modify `tslint.json` (add `extends` and the rule configuration to `rules`):
 
 The above configuration would enforce the following import group order:
 
-- dependencies from `node_modules` (or NodeJS native modules)
+- dependencies from `node_modules` (but not NodeJS native modules - this is configured by setting
+  `disable-native-nodejs-modules`)
 - anything that starts with `common`
 - anything that starts wtih `products`
 - other imports
