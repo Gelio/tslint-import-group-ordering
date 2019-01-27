@@ -1,5 +1,16 @@
 # Changelog
 
+## v2.1.0 (1/27/2019)
+
+- Allow disabling treating native NodeJS modules as dependencies.
+
+- Fix handling leading import declaration comments. They will no longer be duplicated when using the
+  auto-fix.
+
+- Performance improvements.
+
+  Node positions will no longer be recalculated upon encountering new nodes.
+
 ## v2.0.0 (1/26/2019)
 
 ### Breaking changes
