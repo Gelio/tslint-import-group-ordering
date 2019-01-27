@@ -19,6 +19,7 @@ export interface DependenciesMatchingRuleConfig
   extends SharedMatchingRuleConfig {
   type: ImportsGroupType.Dependencies;
   'disable-native-nodejs-modules'?: boolean;
+  'from-package.json'?: boolean;
 }
 
 export interface ProjectMatchingRuleConfig extends SharedMatchingRuleConfig {
