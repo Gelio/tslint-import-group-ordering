@@ -54,6 +54,9 @@ export class Rule extends Lint.Rules.AbstractRule {
                   },
                   'disable-native-nodejs-modules': {
                     type: 'boolean'
+                  },
+                  'from-package.json': {
+                    type: 'boolean'
                   }
                 },
                 additionalProperties: false,
@@ -113,7 +116,8 @@ export class Rule extends Lint.Rules.AbstractRule {
             {
               type: 'dependencies',
               'imports-group': 'dependencies',
-              'disable-native-nodejs-modules': true
+              'disable-native-nodejs-modules': true,
+              'from-package.json': true
             },
             {
               type: 'project',
