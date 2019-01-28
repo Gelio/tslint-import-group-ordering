@@ -21,8 +21,8 @@
   - preserves comments
   - preserves non-import statements that appear in-between import statements
 
-    Even though it is against the ECMAScript Modules specification. The rule will not break your
-    code.
+    Even though it is allowed in the ECMAScript Modules specification, the rule discourages mixing
+    regular statements with import declarations.
 
 ## Usage
 
