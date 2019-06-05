@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.1.2 (6/5/2019)
+
+- Update package dependencies to latest versions
+
 ## v2.1.1 (1/27/2019)
 
 - Fix parsing `package.json` that does not have either `devDependencies` or `dependencies` at all.
