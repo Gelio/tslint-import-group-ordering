@@ -34,7 +34,7 @@ function readDependenciesFromPackageJson() {
 
     const dependencies = Object.keys(parsedPackageJson.dependencies || {});
     const devDependencies = Object.keys(
-      parsedPackageJson.devDependencies || {}
+      parsedPackageJson.devDependencies || {},
     );
 
     return [...dependencies, ...devDependencies];

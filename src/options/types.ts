@@ -4,7 +4,7 @@ import { NodesContainer, Predicate } from '../nodes-containers';
 
 export enum ImportsGroupType {
   Dependencies = 'dependencies',
-  Project = 'project'
+  Project = 'project',
 }
 
 export interface ImportsGroupConfig {
@@ -15,8 +15,7 @@ interface SharedMatchingRuleConfig {
   'imports-group': string;
 }
 
-export interface DependenciesMatchingRuleConfig
-  extends SharedMatchingRuleConfig {
+export interface DependenciesMatchingRuleConfig extends SharedMatchingRuleConfig {
   type: ImportsGroupType.Dependencies;
   'disable-native-nodejs-modules'?: boolean;
   'from-package.json'?: boolean;
@@ -28,8 +27,7 @@ export interface ProjectMatchingRuleConfig extends SharedMatchingRuleConfig {
 }
 
 export type MatchingRuleConfig =
-  | DependenciesMatchingRuleConfig
-  | ProjectMatchingRuleConfig;
+  DependenciesMatchingRuleConfig | ProjectMatchingRuleConfig;
 
 export interface RuleConfig {
   'imports-groups': ImportsGroupConfig[];

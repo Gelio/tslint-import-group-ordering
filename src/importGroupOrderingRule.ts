@@ -20,7 +20,7 @@ export class Rule extends Lint.Rules.AbstractRule {
       node modules and NodeJS native modules) or specific project files, configured
       with a regular expression (regexp).
 
-      Each import statement is tested against consecutive matching rules. It it matches
+      Each import statement is tested against consecutive matching rules. If it matches
       a specific matching rule, that import statement belongs to an imports group defined
       in the matching rule.
     `,
@@ -34,10 +34,10 @@ export class Rule extends Lint.Rules.AbstractRule {
             type: 'object',
             properties: {
               name: {
-                type: 'string'
-              }
-            }
-          }
+                type: 'string',
+              },
+            },
+          },
         },
         'matching-rules': {
           type: 'array',
@@ -47,42 +47,42 @@ export class Rule extends Lint.Rules.AbstractRule {
               {
                 properties: {
                   type: {
-                    const: 'dependencies'
+                    const: 'dependencies',
                   },
                   'imports-group': {
-                    type: 'string'
+                    type: 'string',
                   },
                   'disable-native-nodejs-modules': {
-                    type: 'boolean'
+                    type: 'boolean',
                   },
                   'from-package.json': {
-                    type: 'boolean'
-                  }
+                    type: 'boolean',
+                  },
                 },
                 additionalProperties: false,
-                required: ['type', 'imports-group']
+                required: ['type', 'imports-group'],
               },
               {
                 properties: {
                   type: {
-                    const: 'project'
+                    const: 'project',
                   },
                   'imports-group': {
-                    type: 'string'
+                    type: 'string',
                   },
                   matches: {
-                    type: 'string'
-                  }
+                    type: 'string',
+                  },
                 },
                 additionalProperties: false,
-                required: ['type', 'imports-group', 'matches']
-              }
-            ]
-          }
-        }
+                required: ['type', 'imports-group', 'matches'],
+              },
+            ],
+          },
+        },
       },
       required: ['imports-groups', 'matching-rules'],
-      additionalProperties: false
+      additionalProperties: false,
     },
     optionExamples: [
       [
@@ -90,46 +90,46 @@ export class Rule extends Lint.Rules.AbstractRule {
         {
           'imports-groups': [
             {
-              name: 'dependencies'
+              name: 'dependencies',
             },
             {
-              name: 'fabric and common'
+              name: 'fabric and common',
             },
             {
-              name: 'product'
+              name: 'product',
             },
             {
-              name: 'other'
-            }
+              name: 'other',
+            },
           ],
           'matching-rules': [
             {
               type: 'project',
               matches: '^(fabric|common)',
-              'imports-group': 'fabric and common'
+              'imports-group': 'fabric and common',
             },
             {
               type: 'project',
               matches: '^(products)',
-              'imports-group': 'product'
+              'imports-group': 'product',
             },
             {
               type: 'dependencies',
               'imports-group': 'dependencies',
               'disable-native-nodejs-modules': true,
-              'from-package.json': true
+              'from-package.json': true,
             },
             {
               type: 'project',
               matches: '.*',
-              'imports-group': 'other'
-            }
-          ]
-        }
-      ]
+              'imports-group': 'other',
+            },
+          ],
+        },
+      ],
     ],
     type: 'style',
-    typescriptOnly: false
+    typescriptOnly: false,
   };
 
   public apply(sourceFile: SourceFile): Lint.RuleFailure[] {
@@ -139,15 +139,15 @@ export class Rule extends Lint.Rules.AbstractRule {
 
     const { importsGroups, matchingRules } = parseRuleConfig(
       sourceFile,
-      this.ruleArguments[0]
+      this.ruleArguments[0],
     );
 
     return this.applyWithWalker(
       new ImportGroupsOrderingWalker(sourceFile, this.ruleName, {
         importsGroups,
         matchingRules,
-        misplacedNonImportStatementsContainer: new NodesContainer(sourceFile)
-      })
+        misplacedNonImportStatementsContainer: new NodesContainer(sourceFile),
+      }),
     );
   }
 }
