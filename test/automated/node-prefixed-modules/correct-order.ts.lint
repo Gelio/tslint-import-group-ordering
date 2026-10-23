@@ -1,0 +1,5 @@
+import {} from 'node:fs';
+import {} from 'typescript';
+import {} from 'node:test';
+
+import {} from './relative';

@@ -1,0 +1,10 @@
+import {} from 'typescript';
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+import {} from 'node:fs';
+~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~ [This import declaration should appear in a later group ("other", number 3)]
+
+~nil
+import {} from './relative';
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~ [Invalid import groups order]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~ [This import declaration should appear in an earlier group ("relative", number 2)]
