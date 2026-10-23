@@ -3,7 +3,7 @@
 [![npm](https://img.shields.io/npm/dw/tslint-import-group-ordering.svg)](https://www.npmjs.com/package/tslint-import-group-ordering)
 [![GitHub stars](https://img.shields.io/github/stars/Gelio/tslint-import-group-ordering.svg)](https://github.com/Gelio/tslint-import-group-ordering/stargazers)
 [![GitHub license](https://img.shields.io/github/license/Gelio/tslint-import-group-ordering.svg)](https://github.com/Gelio/tslint-import-group-ordering)
-[![Build Status](https://dev.azure.com/vorenygelio/vorenygelio/_apis/build/status/Gelio.tslint-import-group-ordering?branchName=master)](https://dev.azure.com/vorenygelio/vorenygelio/_build/latest?definitionId=1?branchName=master)
+[![CI](https://github.com/Gelio/tslint-import-group-ordering/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/Gelio/tslint-import-group-ordering/actions/workflows/ci.yml)
 
 ![Demo](https://imgur.com/download/DBMMoA6)
 
