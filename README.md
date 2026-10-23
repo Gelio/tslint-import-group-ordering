@@ -100,11 +100,12 @@ keeps comments attached to their imports, and its messages name the groups of bo
    import perfectionist from 'eslint-plugin-perfectionist';
    import tseslint from 'typescript-eslint';
 
-   import pkg from './package.json' with { type: 'json' };
+   import { createRequire } from 'node:module';
 
    // "from-package.json": true -> build the "dependencies" pattern from package.json.
    // Built-in modules such as `fs` are not in package.json, which also covers
    // "disable-native-nodejs-modules": true.
+   const pkg = createRequire(import.meta.url)('./package.json');
    const packageNames = [
      ...Object.keys(pkg.dependencies ?? {}),
      ...Object.keys(pkg.devDependencies ?? {}),
