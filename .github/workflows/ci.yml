@@ -87,3 +87,69 @@ jobs:
             echo "::error::Expected $want passing lint fixtures, got $got"
             exit 1
           fi
+
+  package:
+    name: Package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      # `prepack` builds `dist`, so this packs what `npm publish` would.
+      - run: npm pack
+      # Lint from the smoke project's root, as users do: the `dependencies`
+      # matching rule reads `node_modules` and `package.json` relative to it.
+      - name: Lint with the packed tarball
+        run: |
+          set -euo pipefail
+          tarball="$PWD/$(ls tslint-import-group-ordering-*.tgz)"
+          mkdir "$RUNNER_TEMP/smoke"
+          cd "$RUNNER_TEMP/smoke"
+          npm init -y > /dev/null
+          # Pin TypeScript 5: an unpinned install picks 7, which TSLint can't run on.
+          npm i --no-audit --no-fund "$tarball" tslint@6 typescript@5
+          write_config() {
+            cat > "$1" <<EOF
+          {
+            "extends": ["tslint-import-group-ordering"],
+            "rules": {
+              "import-group-ordering": {
+                "options": {
+                  "imports-groups": [{ "name": "dependencies" }, { "name": "other" }],
+                  "matching-rules": [
+                    { "type": "dependencies", "imports-group": "dependencies"$2 },
+                    { "type": "project", "matches": ".*", "imports-group": "other" }
+                  ]
+                }
+              }
+            }
+          }
+          EOF
+          }
+          write_config tslint.json ''
+          # Reads the dependency list from the smoke project's `package.json`.
+          write_config tslint-from-package-json.json ', "from-package.json": true'
+          printf "import {} from './local';\nimport {} from 'tslint';\n" > bad.ts
+          printf "import {} from 'tslint';\n\nimport {} from './local';\n" > good.ts
+          expect_violation() {
+            set +e
+            npx tslint -c "$1" bad.ts > bad.out 2>&1
+            status=$?
+            set -e
+            cat bad.out
+            # Match the message, not the rule name: the name also appears in
+            # stack-trace paths, so a crash would pass.
+            if [ "$status" -eq 0 ] || ! grep -q 'should appear in an earlier group ("dependencies"' bad.out; then
+              echo "::error::Expected tslint -c $1 to report import-group-ordering in bad.ts"
+              exit 1
+            fi
+          }
+          expect_violation tslint.json
+          expect_violation tslint-from-package-json.json
+          npx tslint -c tslint.json good.ts
+          cp bad.ts fix.ts
+          npx tslint -c tslint.json --fix fix.ts
+          diff good.ts fix.ts
