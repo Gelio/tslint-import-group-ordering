@@ -151,6 +151,8 @@ jobs:
           expect_violation tslint.json
           expect_violation tslint-from-package-json.json
           npx tslint -c tslint.json good.ts
+          echo "good.ts lints clean"
           cp bad.ts fix.ts
           npx tslint -c tslint.json --fix fix.ts
           diff good.ts fix.ts
+          echo "--fix reordered bad.ts to match good.ts"
