@@ -45,7 +45,7 @@ keeps comments attached to their imports, and its messages name the groups of bo
 
 2. Create an ESLint config in one of two ways:
 
-   - To convert the rest of your `tslint.json` too, run
+   - **(a)** To convert the rest of your `tslint.json` too, run
      [`tslint-to-eslint-config`](https://github.com/typescript-eslint/tslint-to-eslint-config). The
      `--comments` option also converts `tslint:disable` comments (adjust the glob to your sources):
 
@@ -65,18 +65,19 @@ keeps comments attached to their imports, and its messages name the groups of bo
      rule running through TSLint inside a `@typescript-eslint/tslint/config` rule, together with
      any other TSLint rules it couldn't map. Remove `import-group-ordering` from that rule's
      `rules` in the new `eslint.config.js`: the next steps replace it. If nothing else is left
-     there, delete the `@typescript-eslint/tslint/config` rule and the `@typescript-eslint/tslint`
-     plugin too; otherwise replace the remaining rules first, because the bridge stops working once
-     TSLint is removed. Then install the packages that both tools list, skipping
-     `@typescript-eslint/eslint-plugin-tslint` if you deleted the bridge.
+     there, delete the `@typescript-eslint/tslint/config` rule, the `@typescript-eslint/tslint`
+     plugin and its `require` line too; otherwise replace the remaining rules first, because the
+     bridge stops working once TSLint is removed. Then install the packages that both tools list,
+     skipping `@typescript-eslint/eslint-plugin-tslint` if you deleted the bridge.
 
-     The converted comments lose the rule names it can't map, so a
-     `tslint:disable-next-line:import-group-ordering` comment becomes a bare
-     `eslint-disable-next-line` that disables every rule on that line. Add
-     `perfectionist/sort-imports` to those comments.
+     The generated config sets `parserOptions.project` for every file, so `npx eslint .` fails on
+     `eslint.config.js` itself with `The file was not found in any of the provided project(s)`. If
+     none of your rules need type information, delete the `"project": "tsconfig.json"` line.
+     Otherwise, replace it with `projectService: { allowDefaultProject: ['*.js'] }`.
 
-   - Otherwise, follow the
-     [typescript-eslint Getting Started guide](https://typescript-eslint.io/getting-started).
+   - **(b)** Otherwise, follow the
+     [typescript-eslint Getting Started guide](https://typescript-eslint.io/getting-started). It
+     creates `eslint.config.mjs`.
 
 3. Install the plugin:
 
@@ -84,74 +85,153 @@ keeps comments attached to their imports, and its messages name the groups of bo
    npm install eslint-plugin-perfectionist --save-dev
    ```
 
-4. Add the rule to the config file from step 2. ESLint loads only one config file, so don't create
-   a second one. The configuration from the
+4. Add the rule to the config file from step 2. ESLint loads only one config file, and it picks
+   `eslint.config.js` over `eslint.config.mjs`, so don't create a second one: the rule would be
+   silently ignored. The configuration from the
    [Usage](https://github.com/Gelio/tslint-import-group-ordering#usage) section below translates
-   to this complete config:
+   as follows.
+
+   With path (b), replace the contents of `eslint.config.mjs` with:
 
    ```js
-   // eslint.config.mjs
-   import fs from 'node:fs';
+   // eslint.config.mjs (path b)
    import js from '@eslint/js';
    import { defineConfig } from 'eslint/config';
    import perfectionist from 'eslint-plugin-perfectionist';
    import tseslint from 'typescript-eslint';
 
+   import pkg from './package.json' with { type: 'json' };
+
    // "from-package.json": true -> build the "dependencies" pattern from package.json.
    // Built-in modules such as `fs` are not in package.json, which also covers
    // "disable-native-nodejs-modules": true.
-   const pkg = JSON.parse(
-     fs.readFileSync(new URL('./package.json', import.meta.url), 'utf8'),
-   );
    const packageNames = [
      ...Object.keys(pkg.dependencies ?? {}),
      ...Object.keys(pkg.devDependencies ?? {}),
    ].map((name) => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
 
+   const importGroups = {
+     files: ['**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}'],
+     plugins: { perfectionist },
+     rules: {
+       'perfectionist/sort-imports': [
+         'warn',
+         {
+           type: 'unsorted', // keep the existing order inside each group
+           newlinesBetween: 1, // one blank line between groups
+           newlinesInside: 'ignore', // allow blank lines inside a group
+           sortSideEffects: true, // group side-effect imports by path too
+           // "imports-groups"
+           groups: ['dependencies', 'common', 'product', 'other'],
+           // "matching-rules": tried top to bottom, first match wins
+           customGroups: [
+             { groupName: 'common', elementNamePattern: '^(common)' },
+             { groupName: 'product', elementNamePattern: '^(product)' },
+             {
+               groupName: 'dependencies',
+               elementNamePattern: `^(${packageNames.join('|')})(/|$)`,
+             },
+             { groupName: 'other', elementNamePattern: '.*' },
+           ],
+         },
+       ],
+     },
+   };
+
    export default defineConfig(
      {
-       files: ['**/*.{js,jsx,ts,tsx}'],
+       files: ['**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}'],
        extends: [js.configs.recommended, tseslint.configs.recommended],
      },
-     {
-       files: ['**/*.{js,jsx,ts,tsx}'],
-       plugins: { perfectionist },
-       rules: {
-         'perfectionist/sort-imports': [
-           'warn',
-           {
-             type: 'unsorted', // keep the existing order inside each group
-             newlinesBetween: 1, // one blank line between groups
-             newlinesInside: 'ignore', // allow blank lines inside a group
-             sortSideEffects: true, // group side-effect imports by path too
-             // "imports-groups"
-             groups: ['dependencies', 'common', 'product', 'other'],
-             // "matching-rules": tried top to bottom, first match wins
-             customGroups: [
-               { groupName: 'common', elementNamePattern: '^(common)' },
-               { groupName: 'product', elementNamePattern: '^(product)' },
-               {
-                 groupName: 'dependencies',
-                 elementNamePattern: `^(${packageNames.join('|')})(/|$)`,
-               },
-               { groupName: 'other', elementNamePattern: '.*' },
-             ],
-           },
-         ],
-       },
-     },
+     importGroups,
    );
    ```
 
-   If your config file uses `require` (`@eslint/migrate-config` writes one for a CommonJS
-   package), load the plugin with `const perfectionist = require('eslint-plugin-perfectionist');`
-   and package.json with `const pkg = require('./package.json');`, copy the `packageNames`
-   declaration, and add the second object above to the array the file exports. Keep its `files`
-   line: ESLint only lints `.ts` and `.tsx` files that a config object's `files` matches.
+   With path (a), edit the generated `eslint.config.js` and don't add an `eslint.config.mjs`.
+   Paste this after its last `require` call:
 
-5. Run `npx eslint src` to see the violations, and `npx eslint --fix src` to fix them.
+   ```js
+   // eslint.config.js (path a): paste after the last `require` call
+   const perfectionist = require('eslint-plugin-perfectionist');
 
-6. Remove `tslint-import-group-ordering`, TSLint and your `tslint.json` once ESLint covers your
+   const pkg = require('./package.json');
+
+   // "from-package.json": true -> build the "dependencies" pattern from package.json.
+   // Built-in modules such as `fs` are not in package.json, which also covers
+   // "disable-native-nodejs-modules": true.
+   const packageNames = [
+     ...Object.keys(pkg.dependencies ?? {}),
+     ...Object.keys(pkg.devDependencies ?? {}),
+   ].map((name) => name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+
+   const importGroups = {
+     files: ['**/*.{js,jsx,mjs,cjs,ts,tsx,mts,cts}'],
+     plugins: { perfectionist },
+     rules: {
+       'perfectionist/sort-imports': [
+         'warn',
+         {
+           type: 'unsorted', // keep the existing order inside each group
+           newlinesBetween: 1, // one blank line between groups
+           newlinesInside: 'ignore', // allow blank lines inside a group
+           sortSideEffects: true, // group side-effect imports by path too
+           // "imports-groups"
+           groups: ['dependencies', 'common', 'product', 'other'],
+           // "matching-rules": tried top to bottom, first match wins
+           customGroups: [
+             { groupName: 'common', elementNamePattern: '^(common)' },
+             { groupName: 'product', elementNamePattern: '^(product)' },
+             {
+               groupName: 'dependencies',
+               elementNamePattern: `^(${packageNames.join('|')})(/|$)`,
+             },
+             { groupName: 'other', elementNamePattern: '.*' },
+           ],
+         },
+       ],
+     },
+   };
+   ```
+
+   Then add `importGroups` as the last element of the array the file exports:
+   `module.exports = defineConfig([{ ... }, importGroups]);`. The blank line before
+   `require('./package.json')` matters, because perfectionist checks top-level `require` calls in
+   the config file too.
+
+   In both versions, keep the `files` line: ESLint lints `.ts` and `.tsx` files only when a
+   config object's `files` matches them.
+
+5. Rewrite `tslint:disable` comments for `import-group-ordering` before running `--fix`, or
+   `--fix` moves the imports they exempt. Find them, and the bare ESLint directives that path (a)
+   leaves behind, with:
+
+   ```sh
+   grep -rnE 'tslint:(disable|enable)|eslint-(disable|enable)(-line|-next-line)? *(\*/)?$' src
+   ```
+
+   `tslint-to-eslint-config --comments` drops the rule names it can't map. It turns
+   `tslint:disable-next-line:import-group-ordering` into a bare `// eslint-disable-next-line`,
+   `tslint:disable-line:…` into `// eslint-disable-line`, and `tslint:disable:…` and
+   `tslint:enable:…` into `/* eslint-disable */` and `/* eslint-enable */`. A bare directive
+   disables every rule, so a file-level `/* eslint-disable */` turns ESLint off for the rest of the
+   file. Add `perfectionist/sort-imports` to each of them, for example
+   `// eslint-disable-next-line perfectionist/sort-imports`. With path (b), replace each
+   `tslint:` comment yourself: `// eslint-disable-next-line perfectionist/sort-imports`,
+   `// eslint-disable-line perfectionist/sort-imports`, and
+   `/* eslint-disable perfectionist/sort-imports */` with `/* eslint-enable … */` (ESLint reads
+   `eslint-disable` and `eslint-enable` only in block comments).
+
+   A `disable-next-line` or `disable-line` comment suppresses reports on that one line only, and
+   perfectionist doesn't always report the import you meant to exempt. If you keep an import
+   above imports from an earlier group, perfectionist reports the next import instead. ESLint then
+   reports the comment as unused, and `--fix` deletes it and moves the import. Put the comment
+   above the import that is reported, or give the import a group of its own, listed first in both
+   `customGroups` and `groups`, such as
+   `{ groupName: 'pinned', elementNamePattern: '^product/sdk$' }`.
+
+6. Run `npx eslint .` to see the violations, and `npx eslint --fix .` to fix them.
+
+7. Remove `tslint-import-group-ordering`, TSLint and your `tslint.json` once ESLint covers your
    code.
 
 ### Options
@@ -160,10 +240,10 @@ keeps comments attached to their imports, and its messages name the groups of bo
 | --- | --- |
 | `"severity": "warning"` | `'warn'` |
 | `imports-groups` | `groups`, in the same order. Leave out groups that no matching rule targets: perfectionist rejects them. |
-| `matching-rules`, first match wins | `customGroups`, tried in order, first match wins |
+| `matching-rules`, first match wins | `customGroups`, tried in order, first match wins. A custom group takes effect only when its `groupName` is also listed in `groups`. |
 | `imports-group` | `groupName`. Several custom groups may share one `groupName`. |
 | `"type": "project"` with `matches` | `{ groupName, elementNamePattern: '<the same regular expression>' }` |
-| `"type": "dependencies"` | `{ groupName, anyOf: [{ selector: 'external' }, { selector: 'builtin' }] }`. Perfectionist doesn't read `node_modules`. It treats every bare import path that doesn't resolve to a project file as `external`, including packages that aren't installed and aliases from `paths` in `tsconfig.json` (such as `@utils/x`). Keep your `project` rules before this one, as this rule's configs already do, or set the plugin's `tsconfig` option to classify aliases as `tsconfig-path`. |
+| `"type": "dependencies"` | `{ groupName, anyOf: [{ selector: 'external' }, { selector: 'builtin' }] }`. Perfectionist doesn't read `node_modules`. It treats every bare import path that doesn't resolve to a project file as `external`, including packages that aren't installed and aliases from `paths` in `tsconfig.json` (such as `@utils/x`). Keep your `project` rules before this one, as this rule's configs already do, or add `tsconfig: { rootDir: '.' }` to the rule's options so that aliases are classified as `tsconfig-path` instead. |
 | `"from-package.json": true` | No option. Build `elementNamePattern` from `package.json`, as in the example above. This rule matched package names as prefixes (`react` also matched `react-dom`); the example's pattern matches a package name and its subpaths only. |
 | `"disable-native-nodejs-modules": true` | Leave out `{ selector: 'builtin' }`. Perfectionist also tags built-in modules as `external`, so exclude them from that selector too: `{ selector: 'external', elementNamePattern: '^(?!(?:node:)?(?:fs\|path\|...)(?:/\|$))' }`, listing the names from `builtinModules` of `node:module`. With a pattern built from `package.json`, built-in modules are already left out. |
 | `node:` imports (`node:fs`) | Perfectionist classifies them as `builtin`, like `fs`, so the mappings above group them the way this rule's v2.2.0 does. |
@@ -171,9 +251,9 @@ keeps comments attached to their imports, and its messages name the groups of bo
 | Blank lines inside a group | `newlinesInside: 'ignore'` accepts them, as this rule did. This rule's autofix removed them from the groups it rewrote; `newlinesInside: 0` does that too, but also reports blank lines inside groups that this rule accepted. |
 | Imports keep their order inside a group | `type: 'unsorted'` |
 | An import that matches no rule is reported | No equivalent. Perfectionist puts it in the `unknown` group, placed last, and fixes it there. Keep a catch-all `.*` rule last. |
-| Non-import statements between imports are reported and moved below the imports | Not reported. Add the [`import-x/first`](https://github.com/un-ts/eslint-plugin-import-x/blob/master/docs/rules/first.md) rule from `eslint-plugin-import-x`, whose autofix moves them. |
-| Side-effect imports (`import './polyfills'`) are grouped by path | By default perfectionist doesn't move them (`sortSideEffects: false`). Set `sortSideEffects: true`, as the example above does, to group them by path, and add `{ groupName: 'side-effects', selector: 'side-effect' }` to give them a group of their own. |
-| `// tslint:disable-next-line:import-group-ordering` | `// eslint-disable-next-line perfectionist/sort-imports`. The import keeps its position. |
+| Non-import statements between imports are reported and moved below the imports | Not reported. Add the [`import-x/first`](https://github.com/un-ts/eslint-plugin-import-x/blob/master/docs/rules/first.md) rule: `npm install eslint-plugin-import-x --save-dev`, then `import { importX } from 'eslint-plugin-import-x'` and `plugins: { 'import-x': importX }, rules: { 'import-x/first': 'warn' }`. Its autofix moves the statements below the imports, without the blank line this rule added. |
+| Side-effect imports (`import './polyfills'`) are grouped by path | By default perfectionist doesn't move them (`sortSideEffects: false`). Set `sortSideEffects: true`, as the example above does, to group them by path. To give them a group of their own, also add `{ groupName: 'side-effects', selector: 'side-effect' }` at the start of `customGroups`, and `'side-effects'` to `groups` where the group should go, such as `groups: ['side-effects', 'dependencies', 'common', 'product', 'other']`. |
+| `// tslint:disable-next-line:import-group-ordering` | `// eslint-disable-next-line perfectionist/sort-imports`. It suppresses a report on the next line only: see step 5 for when perfectionist reports a neighbouring import instead. |
 
 ### Compatibility
 
