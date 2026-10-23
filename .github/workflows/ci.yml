@@ -38,7 +38,11 @@ jobs:
       fail-fast: false
       matrix:
         tslint: ['5', '6']
-        typescript: ['3.9', '4.9', '5', '6']
+        typescript: ['2.4', '3.9', '4.9', '5', '6']
+        include:
+          # The declared peer floor for TSLint.
+          - tslint: '5.1.0'
+            typescript: '2.4'
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-node@v7
@@ -61,13 +65,25 @@ jobs:
             console.log(`typescript ${ts}, tslint ${tslint}`);
             const wantTs = process.env.WANT_TS;
             const wantTslint = process.env.WANT_TSLINT;
-            if (!ts.startsWith(wantTs + ".")) {
+            if (ts !== wantTs && !ts.startsWith(wantTs + ".")) {
               console.error(`Expected typescript ${wantTs}.x, got ${ts}`);
               process.exit(1);
             }
-            if (!tslint.startsWith(wantTslint + ".")) {
+            if (tslint !== wantTslint && !tslint.startsWith(wantTslint + ".")) {
               console.error(`Expected tslint ${wantTslint}.x, got ${tslint}`);
               process.exit(1);
             }
           '
-      - run: npm run test:only
+      # Older TSLint versions silently run zero fixtures when given a path they
+      # don't understand and still exit 0, so require every fixture to report.
+      - name: Run tests
+        run: |
+          set -o pipefail
+          npm run test:only | tee test.out
+          want=$(ls test/automated/*/*.lint | wc -l)
+          got=$(grep -cE '\.ts\.lint:.* Passed' test.out || true)
+          echo "Passed fixtures: $got of $want"
+          if [ "$got" -ne "$want" ]; then
+            echo "::error::Expected $want passing lint fixtures, got $got"
+            exit 1
+          fi
