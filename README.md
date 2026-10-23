@@ -5,7 +5,7 @@
 [![GitHub license](https://img.shields.io/github/license/Gelio/tslint-import-group-ordering.svg)](https://github.com/Gelio/tslint-import-group-ordering)
 [![CI](https://github.com/Gelio/tslint-import-group-ordering/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/Gelio/tslint-import-group-ordering/actions/workflows/ci.yml)
 
-![Demo](https://imgur.com/download/DBMMoA6)
+![Demo](https://i.imgur.com/DBMMoA6.gif)
 
 - enforces imports groups ordering
 - highly configurable
@@ -88,7 +88,7 @@ The above configuration would enforce the following import group order:
 - dependencies from `node_modules` (but not NodeJS native modules - this is configured by setting
   `disable-native-nodejs-modules`)
 - anything that starts with `common`
-- anything that starts wtih `products`
+- anything that starts with `product`
 - other imports
 
 For example, the following order of imports would be incorrect:
@@ -135,7 +135,7 @@ See [TSLint's docs](https://palantir.github.io/tslint/develop/testing-rules/) fo
 
 ### Automated autofix tests
 
-There apply the TSLint's autofix and compare the results with the expected ones.
+These apply the TSLint's autofix and compare the results with the expected ones.
 
 First, build the rule using `npm run build` and then run:
 
