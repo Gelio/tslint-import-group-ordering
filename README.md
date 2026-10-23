@@ -62,10 +62,13 @@ keeps comments attached to their imports, and its messages name the groups of bo
      ```
 
      `tslint-to-eslint-config` has no ESLint equivalent for `import-group-ordering`, so it keeps the
-     rule running through TSLint inside a `@typescript-eslint/tslint/config` rule. Delete that
-     rule, and the `@typescript-eslint/tslint` plugin, from the new `eslint.config.js`: the next
-     steps replace them, and they stop working once TSLint is removed. Then install the packages
-     that both tools list, except `@typescript-eslint/eslint-plugin-tslint`.
+     rule running through TSLint inside a `@typescript-eslint/tslint/config` rule, together with
+     any other TSLint rules it couldn't map. Remove `import-group-ordering` from that rule's
+     `rules` in the new `eslint.config.js`: the next steps replace it. If nothing else is left
+     there, delete the `@typescript-eslint/tslint/config` rule and the `@typescript-eslint/tslint`
+     plugin too; otherwise replace the remaining rules first, because the bridge stops working once
+     TSLint is removed. Then install the packages that both tools list, skipping
+     `@typescript-eslint/eslint-plugin-tslint` if you deleted the bridge.
 
      The converted comments lose the rule names it can't map, so a
      `tslint:disable-next-line:import-group-ordering` comment becomes a bare
@@ -120,6 +123,7 @@ keeps comments attached to their imports, and its messages name the groups of bo
              type: 'unsorted', // keep the existing order inside each group
              newlinesBetween: 1, // one blank line between groups
              newlinesInside: 'ignore', // allow blank lines inside a group
+             sortSideEffects: true, // group side-effect imports by path too
              // "imports-groups"
              groups: ['dependencies', 'common', 'product', 'other'],
              // "matching-rules": tried top to bottom, first match wins
@@ -168,7 +172,7 @@ keeps comments attached to their imports, and its messages name the groups of bo
 | Imports keep their order inside a group | `type: 'unsorted'` |
 | An import that matches no rule is reported | No equivalent. Perfectionist puts it in the `unknown` group, placed last, and fixes it there. Keep a catch-all `.*` rule last. |
 | Non-import statements between imports are reported and moved below the imports | Not reported. Add the [`import-x/first`](https://github.com/un-ts/eslint-plugin-import-x/blob/master/docs/rules/first.md) rule from `eslint-plugin-import-x`, whose autofix moves them. |
-| Side-effect imports (`import './polyfills'`) are grouped by path | By default perfectionist doesn't move them (`sortSideEffects: false`). Set `sortSideEffects: true` to group them by path, and add `{ groupName: 'side-effects', selector: 'side-effect' }` to give them a group of their own. |
+| Side-effect imports (`import './polyfills'`) are grouped by path | By default perfectionist doesn't move them (`sortSideEffects: false`). Set `sortSideEffects: true`, as the example above does, to group them by path, and add `{ groupName: 'side-effects', selector: 'side-effect' }` to give them a group of their own. |
 | `// tslint:disable-next-line:import-group-ordering` | `// eslint-disable-next-line perfectionist/sort-imports`. The import keeps its position. |
 
 ### Compatibility
