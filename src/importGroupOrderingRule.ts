@@ -20,7 +20,7 @@ export class Rule extends Lint.Rules.AbstractRule {
       node modules and NodeJS native modules) or specific project files, configured
       with a regular expression (regexp).
 
-      Each import statement is tested against consecutive matching rules. It it matches
+      Each import statement is tested against consecutive matching rules. If it matches
       a specific matching rule, that import statement belongs to an imports group defined
       in the matching rule.
     `,
