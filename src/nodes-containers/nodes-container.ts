@@ -13,8 +13,9 @@ export interface NodesContainer<TNode extends Node> {
   toString(): string;
 }
 
-export class NodesContainer<TNode extends Node>
-  implements NodesContainer<TNode> {
+export class NodesContainer<
+  TNode extends Node,
+> implements NodesContainer<TNode> {
   private readonly nodes: TNode[] = [];
   private readonly sourceFile: SourceFile;
 
@@ -45,7 +46,7 @@ export class NodesContainer<TNode extends Node>
 
     return {
       pos: firstNode.getFullStart(),
-      end: lastNode.getEnd()
+      end: lastNode.getEnd(),
     };
   }
 
@@ -61,7 +62,7 @@ export class NodesContainer<TNode extends Node>
      * That is why multiple newlines have to be collapsed and the output has to be trimmed.
      */
     const rawOutput = nodes
-      .map(node => node.getFullText(sourceFile))
+      .map((node) => node.getFullText(sourceFile))
       .join('\n');
 
     return trimAndCollapseNewLines(rawOutput);
@@ -69,7 +70,7 @@ export class NodesContainer<TNode extends Node>
 
   private sortNodesByAscendingPosition() {
     this.nodes.sort(
-      (a, b) => a.getStart(this.sourceFile) - b.getStart(this.sourceFile)
+      (a, b) => a.getStart(this.sourceFile) - b.getStart(this.sourceFile),
     );
   }
 }
