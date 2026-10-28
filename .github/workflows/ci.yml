@@ -1,0 +1,158 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: read
+
+# Pull requests share a group per ref so new pushes cancel stale runs.
+# Pushes to master get a unique group so every commit keeps a result.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['22', '24', '26']
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm ci
+      - run: npm test
+
+  compat:
+    name: Compat (TSLint ${{ matrix.tslint }}, TypeScript ${{ matrix.typescript }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        tslint: ['5', '6']
+        typescript: ['2.4', '3.9', '4.9', '5', '6']
+        include:
+          # The declared peer floor for TSLint.
+          - tslint: '5.1.0'
+            typescript: '2.4'
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      # Compile with the devDependency TypeScript before overriding it:
+      # the rule ships as compiled JS, so only the runtime versions vary.
+      - run: npm run build
+      - run: npm i --no-save tslint@${{ matrix.tslint }} typescript@${{ matrix.typescript }}
+      - name: Assert installed versions
+        env:
+          WANT_TS: ${{ matrix.typescript }}
+          WANT_TSLINT: ${{ matrix.tslint }}
+        run: |
+          node -e '
+            const ts = require("typescript/package.json").version;
+            const tslint = require("tslint/package.json").version;
+            console.log(`typescript ${ts}, tslint ${tslint}`);
+            const wantTs = process.env.WANT_TS;
+            const wantTslint = process.env.WANT_TSLINT;
+            if (ts !== wantTs && !ts.startsWith(wantTs + ".")) {
+              console.error(`Expected typescript ${wantTs}.x, got ${ts}`);
+              process.exit(1);
+            }
+            if (tslint !== wantTslint && !tslint.startsWith(wantTslint + ".")) {
+              console.error(`Expected tslint ${wantTslint}.x, got ${tslint}`);
+              process.exit(1);
+            }
+          '
+      # Older TSLint versions silently run zero fixtures when given a path they
+      # don't understand and still exit 0, so require every fixture to report.
+      - name: Run tests
+        run: |
+          set -o pipefail
+          npm run test:only | tee test.out
+          want=$(ls test/automated/*/*.lint | wc -l)
+          got=$(grep -cE '\.ts\.lint:.* Passed' test.out || true)
+          echo "Passed fixtures: $got of $want"
+          if [ "$got" -ne "$want" ]; then
+            echo "::error::Expected $want passing lint fixtures, got $got"
+            exit 1
+          fi
+
+  package:
+    name: Package
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm run format:check
+      # `prepack` builds `dist`, so this packs what `npm publish` would.
+      - run: npm pack
+      # Lint from the smoke project's root, as users do: the `dependencies`
+      # matching rule reads `node_modules` and `package.json` relative to it.
+      - name: Lint with the packed tarball
+        run: |
+          set -euo pipefail
+          tarball="$PWD/$(ls tslint-import-group-ordering-*.tgz)"
+          mkdir "$RUNNER_TEMP/smoke"
+          cd "$RUNNER_TEMP/smoke"
+          npm init -y > /dev/null
+          # Pin TypeScript 5: an unpinned install picks 7, which TSLint can't run on.
+          npm i --no-audit --no-fund "$tarball" tslint@6 typescript@5
+          write_config() {
+            cat > "$1" <<EOF
+          {
+            "extends": ["tslint-import-group-ordering"],
+            "rules": {
+              "import-group-ordering": {
+                "options": {
+                  "imports-groups": [{ "name": "dependencies" }, { "name": "other" }],
+                  "matching-rules": [
+                    { "type": "dependencies", "imports-group": "dependencies"$2 },
+                    { "type": "project", "matches": ".*", "imports-group": "other" }
+                  ]
+                }
+              }
+            }
+          }
+          EOF
+          }
+          write_config tslint.json ''
+          # Reads the dependency list from the smoke project's `package.json`.
+          write_config tslint-from-package-json.json ', "from-package.json": true'
+          printf "import {} from './local';\nimport {} from 'tslint';\n" > bad.ts
+          printf "import {} from 'tslint';\n\nimport {} from './local';\n" > good.ts
+          expect_violation() {
+            set +e
+            npx tslint -c "$1" bad.ts > bad.out 2>&1
+            status=$?
+            set -e
+            cat bad.out
+            # Match the message, not the rule name: the name also appears in
+            # stack-trace paths, so a crash would pass.
+            if [ "$status" -eq 0 ] || ! grep -q 'should appear in an earlier group ("dependencies"' bad.out; then
+              echo "::error::Expected tslint -c $1 to report import-group-ordering in bad.ts"
+              exit 1
+            fi
+          }
+          expect_violation tslint.json
+          expect_violation tslint-from-package-json.json
+          npx tslint -c tslint.json good.ts
+          echo "good.ts lints clean"
+          cp bad.ts fix.ts
+          npx tslint -c tslint.json --fix fix.ts
+          diff good.ts fix.ts
+          echo "--fix reordered bad.ts to match good.ts"

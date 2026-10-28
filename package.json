@@ -1,28 +1,43 @@
 {
   "name": "tslint-import-group-ordering",
-  "version": "2.1.2",
+  "version": "2.2.0",
   "description": "TSLint rule for ordering import groups",
   "main": "tslint-import-group-ordering.json",
+  "files": [
+    "dist",
+    "tslint-import-group-ordering.json",
+    "CHANGELOG.md"
+  ],
   "scripts": {
+    "prebuild": "rm -rf dist",
     "build": "tsc",
-    "prepublishOnly": "npm run build",
+    "prepack": "npm run build",
     "pretest": "npm run build",
     "test": "npm run test:only",
     "test:only": "npm run test:only:lint && npm run test:only:automated-fix",
-    "test:only:lint": "tslint --test test/automated/**/tslint.json",
-    "test:only:automated-fix": "cd test/automated-fix && bash test-automated-fix.sh"
+    "test:only:lint": "tslint --test test/automated/*/",
+    "test:only:automated-fix": "cd test/automated-fix && bash test-automated-fix.sh",
+    "format": "prettier --write src .github",
+    "format:check": "prettier --check src .github"
   },
+  "keywords": [
+    "tslint",
+    "import order",
+    "import groups",
+    "tslint plugin"
+  ],
   "author": "Grzegorz Rozdzialik <voreny.gelio@gmail.com>",
   "license": "MIT",
   "dependencies": {},
   "peerDependencies": {
-    "tslint": "^5.1.0",
-    "typescript": ">=2.1.0 || >=2.7.0-dev || >=2.8.0-dev || >=2.9.0-dev"
+    "tslint": "^5.1.0 || ^6.0.0",
+    "typescript": ">=2.4.0 <7.0.0-0"
   },
   "devDependencies": {
-    "@types/node": "^12.0.4",
-    "tslint": "^5.17.0",
-    "typescript": "^3.5.1"
+    "@types/node": "^22.20.5",
+    "prettier": "^3.9.10",
+    "tslint": "^6.1.3",
+    "typescript": "^5.9.3"
   },
   "homepage": "https://github.com/Gelio/tslint-import-group-ordering",
   "repository": {

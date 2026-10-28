@@ -4,19 +4,19 @@ import {
   MatchingRuleConfig,
   ImportsGroupType,
   DependenciesMatchingRuleConfig,
-  ProjectMatchingRuleConfig
+  ProjectMatchingRuleConfig,
 } from './types';
 import { Predicate } from '../nodes-containers';
 import {
   getNodeJsModulesRegExps,
   getNodeModulesRegExps,
-  getPackageJsonDependenciesRegExps
+  getPackageJsonDependenciesRegExps,
 } from '../utils/get-dependencies-reg-exps';
 import { removeQuotes } from '../utils/remove-quotes';
 
 export function getImportsGroupPredicate(
   sourceFile: SourceFile,
-  matchingRuleConfig: MatchingRuleConfig
+  matchingRuleConfig: MatchingRuleConfig,
 ): Predicate<ImportDeclaration> {
   if (matchingRuleConfig.type === ImportsGroupType.Dependencies) {
     return getDependenciesImportsGroupPredicate(sourceFile, matchingRuleConfig);
@@ -27,15 +27,15 @@ export function getImportsGroupPredicate(
 
 const getProjectImportsGroupPredicate = (
   sourceFile: SourceFile,
-  matchingRuleConfig: ProjectMatchingRuleConfig
+  matchingRuleConfig: ProjectMatchingRuleConfig,
 ) =>
   importDeclarationMatchesRegExpsFactory(sourceFile, [
-    new RegExp(matchingRuleConfig.matches)
+    new RegExp(matchingRuleConfig.matches),
   ]);
 
 function getDependenciesImportsGroupPredicate(
   sourceFile: SourceFile,
-  matchingRuleConfig: DependenciesMatchingRuleConfig
+  matchingRuleConfig: DependenciesMatchingRuleConfig,
 ) {
   const regExps = matchingRuleConfig['from-package.json']
     ? getPackageJsonDependenciesRegExps()
@@ -48,11 +48,10 @@ function getDependenciesImportsGroupPredicate(
   return importDeclarationMatchesRegExpsFactory(sourceFile, regExps);
 }
 
-const importDeclarationMatchesRegExpsFactory = (
-  sourceFile: SourceFile,
-  regExps: RegExp[]
-): Predicate<ImportDeclaration> => node =>
-  regExps.some(regExp => regExp.test(getModuleSpecifier(sourceFile, node)));
+const importDeclarationMatchesRegExpsFactory =
+  (sourceFile: SourceFile, regExps: RegExp[]): Predicate<ImportDeclaration> =>
+  (node) =>
+    regExps.some((regExp) => regExp.test(getModuleSpecifier(sourceFile, node)));
 
 function getModuleSpecifier(sourceFile: SourceFile, node: ImportDeclaration) {
   return removeQuotes(node.moduleSpecifier.getText(sourceFile));

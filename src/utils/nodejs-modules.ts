@@ -37,5 +37,5 @@ export const nodejsModules = [
   'util',
   'v8',
   'vm',
-  'zlib'
+  'zlib',
 ];
