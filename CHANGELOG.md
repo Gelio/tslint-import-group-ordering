@@ -1,6 +1,6 @@
 # Changelog
 
-## v2.2.0 (10/23/2026)
+## v2.2.0 (10/28/2026)
 
 - Final release. `tslint-import-group-ordering` is no longer maintained because TSLint is
   deprecated.
